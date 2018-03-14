@@ -3,13 +3,11 @@ package rh.tripper;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -19,7 +17,6 @@ import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -41,7 +38,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Map;
+import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
@@ -51,9 +48,11 @@ public class MainActivity extends AppCompatActivity
     RelativeLayout progress = null;
     String email = null;
     Context context = null;
-    JSONObject jsonObject = null;
+    JSONObject tripsJsonObject = null;
+    JSONObject stopsJsonObject = null;
     NavigationView navigationView = null;
     String tripArray[] = {};
+    String tripIDForStops = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,7 +118,7 @@ public class MainActivity extends AppCompatActivity
                 while ((inputStr = streamReader.readLine()) != null)
                     responseStrBuilder.append(inputStr);
 
-                jsonObject = new JSONObject(responseStrBuilder.toString());
+                tripsJsonObject = new JSONObject(responseStrBuilder.toString());
                 urlConnection.disconnect();
                 in.close();
             }
@@ -131,7 +130,7 @@ public class MainActivity extends AppCompatActivity
             }
             finally
             {
-                return jsonObject;
+                return tripsJsonObject;
             }
         }
 
@@ -145,7 +144,7 @@ public class MainActivity extends AppCompatActivity
             SubMenu sub = m.addSubMenu("Trips");
             try
             {
-                JSONArray tripJSON = jsonObject.getJSONArray("trips");
+                JSONArray tripJSON = tripsJsonObject.getJSONArray("trips");
                 tripArray = new String[tripJSON.length()];
 
                 for(int i = 0; i <tripJSON.length(); i++)
@@ -153,7 +152,7 @@ public class MainActivity extends AppCompatActivity
                     JSONObject tripObj = tripJSON.getJSONObject(i);
                     //sub.add(tripObj.getString("tripName")).setCheckable(false).setIcon(R.drawable.ic_place_black_24dp);
                     //sub.add(R.id.drawer_group, , i, "Test " + i).setIcon(R.drawable.ic_place_black_24dp);
-                    sub.add(R.id.trips_group, Menu.FIRST + i, Menu.FIRST + i, tripObj.getString("tripName")).setCheckable(true).setIcon(R.drawable.ic_place_black_24dp);
+                    sub.add(R.id.trips_group, tripObj.getInt("tripID"), Menu.FIRST + i, tripObj.getString("tripName")).setCheckable(true).setIcon(R.drawable.ic_place_black_24dp);
                 }
             }
             catch(JSONException e)
@@ -196,7 +195,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
-        int id = item.getItemId();
+        Integer id = item.getItemId();
 
         if (id == R.id.profile) {
             // Handle the camera action
@@ -206,7 +205,10 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.logout) {
             Toast.makeText(context, String.valueOf(id), Toast.LENGTH_LONG).show();
         } else {
-            Toast.makeText(context, String.valueOf(id), Toast.LENGTH_LONG).show();
+            tripIDForStops = String.valueOf(id);
+
+            MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
+            getAllStops.execute();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -216,6 +218,76 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        map = googleMap;
+    }
 
+    private class GetAllStops extends AsyncTask<Void, Void, JSONObject> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected JSONObject doInBackground(Void... params) {
+
+            HttpURLConnection urlConnection;
+            InputStream in;
+
+            try{
+                URL url = new URL("http://10.0.2.2:3000/getallstops?tripid="+ tripIDForStops);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                in = new BufferedInputStream(urlConnection.getInputStream());
+                BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+                StringBuilder responseStrBuilder = new StringBuilder();
+                String inputStr;
+                while ((inputStr = streamReader.readLine()) != null)
+                    responseStrBuilder.append(inputStr);
+
+                stopsJsonObject = new JSONObject(responseStrBuilder.toString());
+                urlConnection.disconnect();
+                in.close();
+            }
+            catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            catch (IOException e){
+                e.printStackTrace();
+            }
+            finally
+            {
+                return stopsJsonObject;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject result) {
+
+            map.clear();
+
+            try {
+                JSONArray stopsJSON = stopsJsonObject.getJSONArray("stops");
+                tripArray = new String[stopsJSON.length()];
+
+                for (int i = 0; i < stopsJSON.length(); i++) {
+                    JSONObject stopsObj = stopsJSON.getJSONObject(i);
+
+                    Double lat = Double.parseDouble(stopsObj.getString("lat"));
+                    Double lng = Double.parseDouble(stopsObj.getString("long"));
+
+                    String stopName = stopsObj.getString("stopName");
+
+                    LatLng marker = new LatLng(lat, lng);
+                    map.addMarker(new MarkerOptions().position(marker).title(stopName));
+
+                    if(i == 0){
+                        map.moveCamera(CameraUpdateFactory.newLatLng(marker));
+                    }
+                }
+
+            } catch(JSONException e){
+                e.printStackTrace();
+            }
+        }
     }
 }
