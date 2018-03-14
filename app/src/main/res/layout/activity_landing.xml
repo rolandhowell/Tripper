@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="rh.tripper.LandingActivity"
+    android:theme="@style/AppTheme.NoActionBar">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="20dp">
+
+        <ImageView
+            android:id="@+id/tripperLogo"
+            android:layout_width="match_parent"
+            android:layout_height="161dp"
+            android:scaleType="fitCenter"
+            app:srcCompat="@drawable/logo"
+            android:contentDescription="@string/tripperLogo"/>
+
+        <TextView
+            android:id="@+id/tagline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tagline"
+            android:layout_below="@id/tripperLogo"
+            android:layout_marginBottom="100dp"
+            android:layout_centerHorizontal="true"/>
+
+        <EditText
+            android:id="@+id/emailBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/tagline"
+            android:layout_centerHorizontal="true"
+            android:hint="@string/emailHint"
+            android:inputType="textEmailAddress"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/passwordBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/emailBox"
+            android:layout_centerHorizontal="true"
+            android:hint="@string/passwordHint"
+            android:inputType="textPassword"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/loginButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/passwordBox"
+            android:layout_marginTop="10dp"
+            android:layout_centerHorizontal="true"
+            android:background="@color/primaryColor"
+            android:text="@string/loginButton"
+            android:textAllCaps="false"
+            android:textSize="18sp"
+            style="@style/Widget.AppCompat.Button.Colored"/>
+
+        <TextView
+            android:id="@+id/regPrompt"
+            android:text="@string/regPrompt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/loginButton"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="25dp"/>
+
+        <Button
+            android:id="@+id/registerButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/regPrompt"
+            android:layout_centerHorizontal="true"
+            android:background="@color/primaryColor"
+            android:text="@string/regButton"
+            android:textSize="18sp"
+            android:textAllCaps="false"
+            style="@style/Widget.AppCompat.Button.Colored"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/progressBarLogin"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000"
+        android:elevation="5000dp"
+        android:orientation="horizontal"
+        android:alpha="0.3"
+        android:visibility="invisible">
+        <ProgressBar
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_centerHorizontal="true" />
+    </RelativeLayout>
+</android.support.constraint.ConstraintLayout>

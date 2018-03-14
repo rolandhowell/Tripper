@@ -1,0 +1,25 @@
+<resources>
+    //Log In Activity
+    <string name="app_name">Tripper</string>
+    <string name="tripperLogo">Tripper Logo</string>
+    <string name="tagline">Your Adventure Companion</string>
+    <string name="emailHint">email@tripper.com</string>
+    <string name="passwordHint">password</string>
+    <string name="loginButton">Log In</string>
+    <string name="regPrompt">Not joined in yet?</string>
+    <string name="regButton">Register</string>
+    <string name="title_activity_main">MainActivity</string>
+
+    //Reg Activity
+    <string name="joinTripper">Register and start using Tripper:</string>
+    <string name="regName">Name</string>
+    <string name="TandCs">Tick to accept out T and Cs</string>
+    <string name="city">City (Optional)</string>
+    <string name="country">Country (Optional)</string>
+    <string name="dob">Date of Birth (Optional)</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>

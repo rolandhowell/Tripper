@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="rh.tripper.RegisterActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_margin="20dp">
+
+        <TextView
+            android:id="@+id/joinUpText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/joinTripper"
+            android:textSize="14sp"/>
+
+        <EditText
+            android:id="@+id/nameBoxNew"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPersonName"
+            android:hint="@string/regName"
+            android:textSize="14sp"/>
+
+        <EditText
+            android:id="@+id/emailBoxNew"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textEmailAddress"
+            android:hint="@string/emailHint"
+            android:textSize="14sp"/>
+
+        <EditText
+            android:id="@+id/passwordBoxNew"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword"
+            android:hint="@string/passwordHint"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/cityBoxNew"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/city"
+            android:textSize="14sp"
+            android:inputType="text"/>
+
+        <EditText
+            android:id="@+id/countryBoxNew"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/country"
+            android:textSize="14sp"
+            android:inputType="text"/>
+
+        <EditText
+            android:id="@+id/dobBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="false"
+            android:hint="@string/dob"
+            android:textSize="14sp" />
+
+        <CheckBox
+            android:id="@+id/checkBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/TandCs"
+            android:textSize="14sp"/>
+
+        <Button
+            android:id="@+id/registerButtonNew"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginHorizontal="100dp"
+            android:background="@color/primaryColor"
+            android:text="@string/regButton"
+            android:textSize="18sp"
+            android:textAllCaps="false"
+            style="@style/Widget.AppCompat.Button.Colored"/>
+
+        <RelativeLayout
+            android:id="@+id/progressBarRegister"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#000"
+            android:elevation="5000dp"
+            android:orientation="horizontal"
+            android:alpha="0.3"
+            android:visibility="invisible">
+            <ProgressBar
+                style="?android:attr/progressBarStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_centerHorizontal="true" />
+        </RelativeLayout>
+    </LinearLayout>
+
+</android.support.constraint.ConstraintLayout>
