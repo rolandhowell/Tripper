@@ -6,4 +6,5 @@
     <color name="primaryTextColor">#000000</color>
     <color name="pressed">#c2c2c2</color>
     <color name="bg">#f5f5f5</color>
+    <color name="bgLight">#FFFFFF</color>
 </resources>

@@ -22,4 +22,14 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="addStopButton">Add a stop</string>
+    <string name="arrivalLabelStart">Arrival:</string>
+    <string name="deptLabelStart">Left:</string>
+    <string name="add_a_stop">Add a stop</string>
+    <string name="stop_name">Stop Name</string>
+    <string name="arrival_date">Arrival Date</string>
+    <string name="departure_date">Departure Date</string>
+    <string name="stop_description">Stop Description</string>
+    <string name="find_on_map">Find on map</string>
+    <string name="search">Search</string>
 </resources>

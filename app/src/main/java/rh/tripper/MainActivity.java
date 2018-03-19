@@ -1,8 +1,12 @@
 package rh.tripper;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -16,15 +20,21 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,7 +48,9 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
@@ -53,12 +65,18 @@ public class MainActivity extends AppCompatActivity
     NavigationView navigationView = null;
     String tripArray[] = {};
     String tripIDForStops = null;
+    BottomSheetBehavior bottomSheetBehavior = null;
+    Integer currentTrip = null;
+    Boolean result = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = this;
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        Integer ID = preferences.getInt("Current Trip", 0);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -70,8 +88,7 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Add a stop", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Snackbar.make(view, "Add a stop", Snackbar.LENGTH_LONG).setAction("Action", null).show();
             }
         });
 
@@ -93,6 +110,43 @@ public class MainActivity extends AppCompatActivity
 
         MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
         getAllTrips.execute(email);
+
+        LinearLayout llBottomSheet = (LinearLayout) findViewById(R.id.bottom_sheet);
+
+        // init the bottom sheet behavior
+        bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
+
+        // change the state of the bottom sheet
+
+        // set the peek height
+        bottomSheetBehavior.setPeekHeight(0);
+
+        // set hideable or not
+        bottomSheetBehavior.setHideable(false);
+
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
+        // set callback for changes
+        bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+
+            }
+        });
+
+        if(ID > 0)
+        {
+            currentTrip = ID;
+            tripIDForStops = String.valueOf(currentTrip);
+
+            MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
+            getAllStops.execute();
+        }
     }
 
     private class GetAllTrips extends AsyncTask<String, Void, JSONObject> {
@@ -145,13 +199,10 @@ public class MainActivity extends AppCompatActivity
             try
             {
                 JSONArray tripJSON = tripsJsonObject.getJSONArray("trips");
-                tripArray = new String[tripJSON.length()];
 
                 for(int i = 0; i <tripJSON.length(); i++)
                 {
                     JSONObject tripObj = tripJSON.getJSONObject(i);
-                    //sub.add(tripObj.getString("tripName")).setCheckable(false).setIcon(R.drawable.ic_place_black_24dp);
-                    //sub.add(R.id.drawer_group, , i, "Test " + i).setIcon(R.drawable.ic_place_black_24dp);
                     sub.add(R.id.trips_group, tripObj.getInt("tripID"), Menu.FIRST + i, tripObj.getString("tripName")).setCheckable(true).setIcon(R.drawable.ic_place_black_24dp);
                 }
             }
@@ -195,17 +246,24 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
-        Integer id = item.getItemId();
+        currentTrip = item.getItemId();
 
-        if (id == R.id.profile) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putInt("Current Trip", currentTrip);
+        editor.apply();
+
+        bottomSheetBehavior.setPeekHeight(0);
+
+        if (currentTrip == R.id.profile) {
             // Handle the camera action
-            Toast.makeText(context, String.valueOf(id), Toast.LENGTH_LONG).show();
-        } else if (id == R.id.settings) {
-            Toast.makeText(context, String.valueOf(id), Toast.LENGTH_LONG).show();
-        } else if (id == R.id.logout) {
-            Toast.makeText(context, String.valueOf(id), Toast.LENGTH_LONG).show();
+            Toast.makeText(context, String.valueOf(currentTrip), Toast.LENGTH_LONG).show();
+        } else if (currentTrip == R.id.settings) {
+            Toast.makeText(context, String.valueOf(currentTrip), Toast.LENGTH_LONG).show();
+        } else if (currentTrip == R.id.logout) {
+            Toast.makeText(context, String.valueOf(currentTrip), Toast.LENGTH_LONG).show();
         } else {
-            tripIDForStops = String.valueOf(id);
+            tripIDForStops = String.valueOf(currentTrip);
 
             MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
             getAllStops.execute();
@@ -265,9 +323,11 @@ public class MainActivity extends AppCompatActivity
 
             map.clear();
 
+            List<LatLng> latlngs = new ArrayList<>();
+
             try {
-                JSONArray stopsJSON = stopsJsonObject.getJSONArray("stops");
-                tripArray = new String[stopsJSON.length()];
+                final JSONArray stopsJSON = stopsJsonObject.getJSONArray("stops");
+                //tripArray = new String[stopsJSON.length()];
 
                 for (int i = 0; i < stopsJSON.length(); i++) {
                     JSONObject stopsObj = stopsJSON.getJSONObject(i);
@@ -276,18 +336,113 @@ public class MainActivity extends AppCompatActivity
                     Double lng = Double.parseDouble(stopsObj.getString("long"));
 
                     String stopName = stopsObj.getString("stopName");
+                    String stopID = stopsObj.getString("stopID");
+
+                    Log.i("Setting ID: ", stopID);
+
+                    Marker markerObj;
 
                     LatLng marker = new LatLng(lat, lng);
-                    map.addMarker(new MarkerOptions().position(marker).title(stopName));
+                    markerObj =  map.addMarker(new MarkerOptions().position(marker).title(stopName));
+
+                    latlngs.add(new LatLng(lat, lng));
+
+                    markerObj.setTag(stopID);
+
 
                     if(i == 0){
-                        map.moveCamera(CameraUpdateFactory.newLatLng(marker));
+                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(marker, 4));
                     }
                 }
+
+                map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                    @Override
+                    public boolean onMarkerClick(Marker marker) {
+                        String ID = (String) (marker.getTag());
+                        int IDint = Integer.parseInt(ID);
+
+                        //Toast.makeText(context, ID, Toast.LENGTH_SHORT).show();
+
+                        try {
+                            final JSONArray stopJSON = stopsJsonObject.getJSONArray("stops");
+
+                            for (int i = 0; i < stopsJSON.length(); i++) {
+
+                                JSONObject stopObject = stopsJSON.getJSONObject(i);
+
+                                if(stopObject.getString("stopID") == ID) {
+
+                                    TextView stopName = (TextView) findViewById(R.id.bottom_stop_name);
+                                    TextView stopDesc = (TextView) findViewById(R.id.bottom_stop_desc);
+                                    TextView arrivalDate = (TextView) findViewById(R.id.bottom_arrival_date);
+                                    TextView deptDate = (TextView) findViewById(R.id.bottom_dept_date);
+
+                                    Log.i("Clicking ID:", ID);
+                                    //Toast.makeText(context, stopObject.getString("stopID") + " " + ID, Toast.LENGTH_SHORT).show();
+                                    stopName.setText(stopObject.getString("stopName"));
+                                    stopDesc.setText(stopObject.getString("stopDesc"));
+                                    arrivalDate.setText(getString(R.string.arrivalLabelStart) + stopObject.getString("arrivalDate"));
+                                    deptDate.setText(getString(R.string.deptLabelStart) + stopObject.getString("deptDate"));
+
+                                    map.moveCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
+
+                                    bottomSheetBehavior.setPeekHeight(100);
+                                }
+                            }
+                        } catch (JSONException e)
+                        {
+                            e.printStackTrace();
+                        }
+                        return false;
+                    }
+                });
+
+                PolylineOptions polylineOptions = new PolylineOptions().addAll(latlngs);
+
+                map.addPolyline(polylineOptions);
 
             } catch(JSONException e){
                 e.printStackTrace();
             }
         }
     }
+
+    /*private class addNewStopToTrip extends AsyncTask<Void, Void, Boolean>{
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            HttpURLConnection urlConnection = null;
+            InputStream in = null;
+
+            try{
+                URL url = new URL("http://10.0.2.2:3000/addstop?tripid="+"&email="+"&arrivaldate="+"&deptdate="+"&stopname="+"&stopdesc="+"&lat="+"&long="+"");
+                urlConnection = (HttpURLConnection) url.openConnection();
+                in = new BufferedInputStream(urlConnection.getInputStream());
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                result = Boolean.valueOf(reader.readLine());
+                urlConnection.disconnect();
+                in.close();
+            }
+            catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            catch (IOException e){
+                e.printStackTrace();
+            }
+            finally
+            {
+                return result;
+            }
+        }
+
+        protected void onPostExecute(Boolean result) {
+
+
+        }
+    }*/
 }
