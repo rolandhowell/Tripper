@@ -22,6 +22,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -216,7 +217,7 @@ public class MainActivity extends AppCompatActivity
             {
                 JSONArray tripJSON = tripsJsonObject.getJSONArray("trips");
 
-                sub.add(R.id.trips_group, R.id.addTripID, Menu.FIRST, "Add a new trip").setCheckable(false).setIcon(R.drawable.ic_add_circle_black_24dp);
+                sub.add(R.id.trips_group, R.id.addTripID, Menu.FIRST, "Add a new trip").setCheckable(false).setIcon(R.drawable.ic_add_black_24dp);
 
                 for(int i = 0; i <tripJSON.length(); i++)
                 {
@@ -282,7 +283,17 @@ public class MainActivity extends AppCompatActivity
                     .setCancelable(false)
                     .setPositiveButton("Add", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            dialog.cancel();
+                            EditText tripName = findViewById(R.id.addTripName);
+
+                            String tripNameStr = tripName.getText().toString();
+
+                            if(tripNameStr != "") {
+
+                                MainActivity.CreateNewTrip createNewTrip = new MainActivity.CreateNewTrip();
+                                createNewTrip.execute(tripNameStr);
+
+                                dialog.cancel();
+                            }
                         }
                     })
                     .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -445,11 +456,12 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private class createNewTrip extends AsyncTask<Void, Void, Boolean> {
+    private class CreateNewTrip extends AsyncTask<String, Void, Boolean> {
 
         @Override
-        protected Boolean doInBackground(Void... voids) {
-            return null;
+        protected Boolean doInBackground(String... tripName) {
+            Log.i("TripName: ", tripName.toString());
+            return true;
         }
     }
 
