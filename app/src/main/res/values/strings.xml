@@ -13,7 +13,7 @@
     //Reg Activity
     <string name="joinTripper">Register and start using Tripper:</string>
     <string name="regName">Name</string>
-    <string name="TandCs">Tick to accept out T and Cs</string>
+    <string name="TandCs">Tick to accept our T and Cs</string>
     <string name="city">City (Optional)</string>
     <string name="country">Country (Optional)</string>
     <string name="dob">Date of Birth (Optional)</string>
