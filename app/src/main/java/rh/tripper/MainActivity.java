@@ -266,7 +266,6 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
 
-
         if (item.getItemId() == R.id.profile) {
             // Handle the camera action
             Toast.makeText(context, String.valueOf(item.getItemId()), Toast.LENGTH_LONG).show();
@@ -277,22 +276,25 @@ public class MainActivity extends AppCompatActivity
         } else if (item.getItemId() == R.id.addTripID) {
 
             View addTripView = View.inflate(context, R.layout.add_stop_dialog, null);
+            final EditText tripName = (EditText) addTripView.findViewById(R.id.addTripName);
 
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             builder.setView(addTripView)
                     .setCancelable(false)
                     .setPositiveButton("Add", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            EditText tripName = findViewById(R.id.addTripName);
-
                             String tripNameStr = tripName.getText().toString();
 
                             if(tripNameStr != "") {
 
-                                MainActivity.CreateNewTrip createNewTrip = new MainActivity.CreateNewTrip();
-                                createNewTrip.execute(tripNameStr);
+                                /*MainActivity.CreateNewTrip createNewTrip = new MainActivity.CreateNewTrip();
+                                createNewTrip.execute(tripNameStr);*/
 
+                                Log.i("Name: ", tripNameStr);
                                 dialog.cancel();
+                            } else
+                            {
+                                Log.i("Name", "test");
                             }
                         }
                     })
@@ -456,14 +458,14 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private class CreateNewTrip extends AsyncTask<String, Void, Boolean> {
+    /*private class CreateNewTrip extends AsyncTask<String, Void, Boolean> {
 
         @Override
         protected Boolean doInBackground(String... tripName) {
             Log.i("TripName: ", tripName.toString());
             return true;
         }
-    }
+    }*/
 
     /*private class addNewStopToTrip extends AsyncTask<Void, Void, Boolean>{
 

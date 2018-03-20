@@ -22,7 +22,8 @@
             android:layout_height="wrap_content"
             android:id="@+id/addTripName"
             android:hint="@string/trip_name"
-            android:textSize="14sp"/>
+            android:textSize="14sp"
+            android:text="test"/>
 
     </LinearLayout>
 
