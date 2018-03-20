@@ -20,8 +20,7 @@
         android:textAlignment="viewStart"
         android:textColor="@color/primaryTextColor"
         android:textSize="20sp"
-        android:typeface="normal"
-        android:fontFamily="@font/matchmaker"/>
+        android:typeface="normal"/>
 
     <LinearLayout
         android:layout_width="match_parent"

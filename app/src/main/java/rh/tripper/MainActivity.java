@@ -90,11 +90,10 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Add a stop", Snackbar.LENGTH_LONG).setAction("Action", null).show();
-                View checkBoxView = View.inflate(context, R.layout.add_stop_dialog, null);
+                                View addStopView = View.inflate(context, R.layout.add_stop_dialog, null);
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                builder.setView(checkBoxView)
+                builder.setView(addStopView)
                         .setCancelable(false)
                         .setPositiveButton("Current location", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
@@ -217,6 +216,8 @@ public class MainActivity extends AppCompatActivity
             {
                 JSONArray tripJSON = tripsJsonObject.getJSONArray("trips");
 
+                sub.add(R.id.trips_group, R.id.addTripID, Menu.FIRST, "Add a new trip").setCheckable(false).setIcon(R.drawable.ic_add_circle_black_24dp);
+
                 for(int i = 0; i <tripJSON.length(); i++)
                 {
                     JSONObject tripObj = tripJSON.getJSONObject(i);
@@ -263,28 +264,48 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
-        currentTrip = item.getItemId();
 
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putInt("Current Trip", currentTrip);
-        editor.apply();
 
-        bottomSheetBehavior.setPeekHeight(0);
-
-        if (currentTrip == R.id.profile) {
+        if (item.getItemId() == R.id.profile) {
             // Handle the camera action
-            Toast.makeText(context, String.valueOf(currentTrip), Toast.LENGTH_LONG).show();
-        } else if (currentTrip == R.id.settings) {
-            Toast.makeText(context, String.valueOf(currentTrip), Toast.LENGTH_LONG).show();
-        } else if (currentTrip == R.id.logout) {
-            Toast.makeText(context, String.valueOf(currentTrip), Toast.LENGTH_LONG).show();
-        } else {
-            tripIDForStops = String.valueOf(currentTrip);
+            Toast.makeText(context, String.valueOf(item.getItemId()), Toast.LENGTH_LONG).show();
+        } else if (item.getItemId() == R.id.settings) {
+            Toast.makeText(context, String.valueOf(item.getItemId()), Toast.LENGTH_LONG).show();
+        } else if (item.getItemId() == R.id.logout) {
+            Toast.makeText(context, String.valueOf(item.getItemId()), Toast.LENGTH_LONG).show();
+        } else if (item.getItemId() == R.id.addTripID) {
 
-            MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
-            getAllStops.execute();
+            View addTripView = View.inflate(context, R.layout.add_stop_dialog, null);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            builder.setView(addTripView)
+                    .setCancelable(false)
+                    .setPositiveButton("Add", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                        }
+                    })
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                        }
+                    }).show();
+        } else {
+                currentTrip = item.getItemId();
+
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putInt("Current Trip", currentTrip);
+                editor.apply();
+
+                bottomSheetBehavior.setPeekHeight(0);
+
+                tripIDForStops = String.valueOf(currentTrip);
+
+                MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
+                getAllStops.execute();
         }
+
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -421,6 +442,14 @@ public class MainActivity extends AppCompatActivity
             } catch(JSONException e){
                 e.printStackTrace();
             }
+        }
+    }
+
+    private class createNewTrip extends AsyncTask<Void, Void, Boolean> {
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            return null;
         }
     }
 

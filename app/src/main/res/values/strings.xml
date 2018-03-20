@@ -32,4 +32,6 @@
     <string name="stop_description">Stop Description</string>
     <string name="find_on_map">Find on map</string>
     <string name="search">Search</string>
+    <string name="add_a_trip">Add a trip</string>
+    <string name="trip_name">Trip name</string>
 </resources>
