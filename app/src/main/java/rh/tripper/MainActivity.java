@@ -207,12 +207,21 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected void onPostExecute(JSONObject result) {
-
             mDrawerLayout = findViewById(R.id.drawer_layout);
             navigationView = findViewById(R.id.nav_view);
 
             Menu m = navigationView.getMenu();
+
+            m.clear();
+
+            SubMenu topMenu = m.addSubMenu("");
+
+            topMenu.add(R.id.drawer_group, R.id.profile, Menu.FIRST, "Profile").setCheckable(false).setIcon(R.drawable.ic_account_circle_black_24dp);
+            topMenu.add(R.id.drawer_group, R.id.settings, Menu.FIRST, "Settings").setCheckable(false).setIcon(R.drawable.ic_settings_black_24dp);
+            topMenu.add(R.id.drawer_group, R.id.logout, Menu.FIRST, "Log Out").setCheckable(false).setIcon(R.drawable.ic_exit_to_app_black_24dp);
+
             SubMenu sub = m.addSubMenu("Trips");
+
             try
             {
                 JSONArray tripJSON = tripsJsonObject.getJSONArray("trips");
@@ -275,26 +284,26 @@ public class MainActivity extends AppCompatActivity
             Toast.makeText(context, String.valueOf(item.getItemId()), Toast.LENGTH_LONG).show();
         } else if (item.getItemId() == R.id.addTripID) {
 
-            View addTripView = View.inflate(context, R.layout.add_stop_dialog, null);
-            final EditText tripName = (EditText) addTripView.findViewById(R.id.addTripName);
+            final View addTripView = View.inflate(context, R.layout.add_trip_dialog, null);
 
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             builder.setView(addTripView)
                     .setCancelable(false)
                     .setPositiveButton("Add", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            String tripNameStr = tripName.getText().toString();
+                            EditText tripname = addTripView.findViewById(R.id.addTripName);
 
-                            if(tripNameStr != "") {
+                            String tripNameStr = tripname.getText().toString();
 
-                                /*MainActivity.CreateNewTrip createNewTrip = new MainActivity.CreateNewTrip();
-                                createNewTrip.execute(tripNameStr);*/
+                            if(tripNameStr.length() > 0) {
 
-                                Log.i("Name: ", tripNameStr);
+                                MainActivity.CreateNewTrip createNewTrip = new MainActivity.CreateNewTrip();
+                                createNewTrip.execute(tripNameStr);
+
                                 dialog.cancel();
                             } else
                             {
-                                Log.i("Name", "test");
+                                tripname.setError("Required");
                             }
                         }
                     })
@@ -458,14 +467,54 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    /*private class CreateNewTrip extends AsyncTask<String, Void, Boolean> {
+    private class CreateNewTrip extends AsyncTask<String, Void, Boolean> {
 
         @Override
         protected Boolean doInBackground(String... tripName) {
-            Log.i("TripName: ", tripName.toString());
-            return true;
+            String tripNameStr = tripName[0];
+
+            HttpURLConnection urlConnection = null;
+            InputStream in = null;
+
+            try{
+                URL url = new URL("http://10.0.2.2:3000/addtrip?email="+email+"&tripname="+tripNameStr+"&startdate=2018-04-26 00:00:00");
+                urlConnection = (HttpURLConnection) url.openConnection();
+                in = new BufferedInputStream(urlConnection.getInputStream());
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                result = Boolean.valueOf(reader.readLine());
+                urlConnection.disconnect();
+                in.close();
+            }
+            catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            catch (IOException e){
+                e.printStackTrace();
+            }
+            finally
+            {
+                return result;
+            }
         }
-    }*/
+        protected void onPostExecute(Boolean result) {
+            if(result == true){
+                MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
+                getAllTrips.execute(email);
+            }
+            else
+            {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setCancelable(true)
+                        .setMessage("There was a problem. Please try again.")
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+
+                            }
+                        })
+                        .show();
+            }
+        }
+    }
 
     /*private class addNewStopToTrip extends AsyncTask<Void, Void, Boolean>{
 
