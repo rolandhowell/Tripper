@@ -34,4 +34,5 @@
     <string name="search">Search</string>
     <string name="add_a_trip">Add a trip</string>
     <string name="trip_name">Trip name</string>
+    <string name="action_edit_trip">Edit Trip</string>
 </resources>
