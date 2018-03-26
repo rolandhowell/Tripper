@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -118,6 +119,8 @@ public class MainActivity extends AppCompatActivity
         if(extras != null) {
             email = extras.getString("email");
         }
+
+        // DEBUGGING
         email = "test@test.com";
 
         MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
@@ -125,20 +128,11 @@ public class MainActivity extends AppCompatActivity
 
         LinearLayout llBottomSheet = findViewById(R.id.bottom_sheet);
 
-        // init the bottom sheet behavior
         bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
-
-        // change the state of the bottom sheet
-
-        // set the peek height
         bottomSheetBehavior.setPeekHeight(0);
-
-        // set hideable or not
         bottomSheetBehavior.setHideable(false);
-
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-        // set callback for changes
         bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
@@ -236,6 +230,124 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private class GetTripName extends AsyncTask<Void, Void, String> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            HttpURLConnection urlConnection;
+            InputStream in;
+            String result = null;
+
+            try{
+                URL url = new URL("http://10.0.2.2:3000/gettripname?tripid="+ currentTrip );
+                urlConnection = (HttpURLConnection) url.openConnection();
+                in = new BufferedInputStream(urlConnection.getInputStream());
+                BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+                StringBuilder responseStrBuilder = new StringBuilder();
+                String inputStr;
+                while ((inputStr = streamReader.readLine()) != null)
+                    responseStrBuilder.append(inputStr);
+
+                result = responseStrBuilder.toString();
+
+                urlConnection.disconnect();
+                in.close();
+            }
+            catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            catch (IOException e){
+                e.printStackTrace();
+            }
+            finally
+            {
+                return result;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            final View editTripView = View.inflate(context, R.layout.edit_trip_dialog, null);
+            final EditText newTripName = editTripView.findViewById(R.id.editTripName);
+
+            newTripName.setText(result);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            builder.setView(editTripView)
+                    .setCancelable(false)
+                    .setPositiveButton("Update", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            String temp = newTripName.getText().toString();
+
+                            MainActivity.SetTripName setTripName = new MainActivity.SetTripName();
+                            setTripName.execute(temp);
+
+                            dialog.cancel();
+                        }
+                    })
+
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                        }
+                    }).show();
+        }
+    }
+
+    private class SetTripName extends AsyncTask<String, Void, Boolean> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Boolean doInBackground(String... newName) {
+
+            HttpURLConnection urlConnection;
+            InputStream in;
+
+            try{
+                URL url = new URL("http://10.0.2.2:3000/settripname?tripid="+ currentTrip + "&tripname=" + newName[0] );
+                urlConnection = (HttpURLConnection) url.openConnection();
+                in = new BufferedInputStream(urlConnection.getInputStream());
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                result = Boolean.valueOf(reader.readLine());
+
+                urlConnection.disconnect();
+                in.close();
+            }
+            catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            catch (IOException e){
+                e.printStackTrace();
+            }
+            finally
+            {
+                return result;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if(result == true) {
+                Snackbar.make(findViewById(R.id.drawer_layout), "Trip updated", Snackbar.LENGTH_LONG).show();
+                MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
+                getAllTrips.execute(email);
+            } else
+            {
+                Snackbar.make(findViewById(R.id.drawer_layout), "Error updating trip", Snackbar.LENGTH_LONG).show();
+            }
+        }
+    }
+
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
@@ -256,10 +368,15 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
+
         switch (item.getItemId()) {
             case android.R.id.home:
                 mDrawerLayout.openDrawer(GravityCompat.START);
                 return true;
+            case R.id.action_edit:
+                MainActivity.GetTripName getTripName = new MainActivity.GetTripName();
+                getTripName.execute();
+                break;
         }
 
         return super.onOptionsItemSelected(item);
