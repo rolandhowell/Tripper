@@ -11,7 +11,6 @@ import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -19,14 +18,12 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -59,6 +56,7 @@ public class MainActivity extends AppCompatActivity
 
     private GoogleMap map;
     private DrawerLayout mDrawerLayout;
+    //private FusedLocationProviderClient mFusedLocationClient;
     String email = null;
     Context context = null;
     JSONObject tripsJsonObject = null;
@@ -71,16 +69,13 @@ public class MainActivity extends AppCompatActivity
     Boolean result = false;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = this;
 
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Integer ID = preferences.getInt("Current Trip", 0);
-
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+        mapFragment.getMapAsync(MainActivity.this);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -89,14 +84,25 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                                View addStopView = View.inflate(context, R.layout.add_stop_dialog, null);
-
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                builder.setView(addStopView)
-                        .setCancelable(false)
+                builder.setCancelable(false)
+                        .setTitle("Add a stop")
                         .setPositiveButton("Current location", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
-
+                                /*mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
+                                if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                                    mFusedLocationClient.getLastLocation()
+                                            .addOnSuccessListener(new OnSuccessListener<Location>() {
+                                                @Override
+                                                public void onSuccess(Location location) {
+                                                    // Got last known location. In some rare situations this can be null.
+                                                    if (location != null) {
+                                                        // Logic to handle location object
+                                                        Log.i("Location:",location.toString());
+                                                    }
+                                                }
+                                            });
+                                }*/
                             }
                         })
                         .setNegativeButton("Search", new DialogInterface.OnClickListener() {
@@ -147,14 +153,6 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        if(ID > 0)
-        {
-            currentTrip = ID;
-            tripIDForStops = String.valueOf(currentTrip);
-
-            MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
-            getAllStops.execute();
-        }
     }
 
     private class GetAllTrips extends AsyncTask<String, Void, JSONObject> {
@@ -454,6 +452,18 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        Integer ID = preferences.getInt("Current Trip", 0);
+
+        if(ID > 0)
+        {
+            currentTrip = ID;
+            tripIDForStops = String.valueOf(currentTrip);
+
+            MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
+            getAllStops.execute();
+        }
     }
 
     private class GetAllStops extends AsyncTask<Void, Void, JSONObject> {
@@ -632,8 +642,12 @@ public class MainActivity extends AppCompatActivity
             }
         }
     }
+/*
+    private void GetCurrentLocation (){
 
-    /*private class addNewStopToTrip extends AsyncTask<Void, Void, Boolean>{
+    }
+
+    private class addNewStopToTrip extends AsyncTask<Void, Void, Boolean>{
 
         @Override
         protected void onPreExecute() {
