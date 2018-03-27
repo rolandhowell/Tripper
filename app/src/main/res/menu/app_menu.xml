@@ -7,5 +7,10 @@
         android:icon="@drawable/ic_mode_edit_white_24dp"
         android:title="@string/action_edit_trip"
         app:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/action_test"
+        android:icon="@drawable/ic_account_circle_black_24dp"
+        android:title="Test"
+        app:showAsAction="ifRoom"/>
 
 </menu>
