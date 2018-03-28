@@ -107,10 +107,31 @@ public class MainActivity extends AppCompatActivity
                         .setMessage("How do you want to add your stop?")
                         .setPositiveButton("Current location", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
-                                if (!checkPermissions()) {
-                                    requestPermissions();
-                                } else {
-                                    getLastLocation();
+                                if(mLastLocation != null){
+                                    final View addStopDialogView = View.inflate(context, R.layout.add_stop_dialog, null);
+
+                                    final EditText stopName = addStopDialogView.findViewById(R.id.addStopName);
+                                    final EditText stopArivalDate = addStopDialogView.findViewById(R.id.addStopStartDate);
+                                    final EditText stopDeptDate = addStopDialogView.findViewById(R.id.addStopEndDate);
+                                    final EditText stopDesc = addStopDialogView.findViewById(R.id.addStopDesc);
+
+                                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                                    builder.setView(addStopDialogView)
+                                            .setTitle("Add stop details")
+                                            .setCancelable(false)
+                                            .setPositiveButton("Add", new DialogInterface.OnClickListener() {
+                                                public void onClick(DialogInterface dialog, int id) {
+
+                                                }
+                                            })
+                                            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                                public void onClick(DialogInterface dialog, int id) {
+                                                    dialog.cancel();
+                                                }
+                                            }).show();
+                                }
+                                else {
+                                    showSnackbar("Your location was not found");
                                 }
                             }
                         })
@@ -175,27 +196,52 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        if (!checkPermissions()) {
+            requestPermissions();
+        } else {
+            getLastLocation();
+        }
+    }
+
     @SuppressWarnings("MissingPermission")
     private void getLastLocation() {
         mFusedLocationClient.getLastLocation()
                 .addOnCompleteListener(this, new OnCompleteListener<Location>() {
                     @Override
                     public void onComplete(@NonNull Task<Location> task) {
-                            if (task.isSuccessful() && task.getResult() != null) {
-                                mLastLocation = task.getResult();
-
-                            } else {
-                                Log.w(TAG, "getLastLocation:exception", task.getException());
-                                showSnackbar(getString(R.string.no_location_detected));
-                            }
+                        if (task.isSuccessful() && task.getResult() != null) {
+                            mLastLocation = task.getResult();
+                        } else {
+                            Log.w(TAG, "getLastLocation:exception", task.getException());
+                            showSnackbar(getString(R.string.no_location_detected));
+                        }
                     }
                 });
     }
 
+    /**
+     * Shows a {@link Snackbar} using {@code text}.
+     *
+     * @param text The Snackbar text.
+     */
     private void showSnackbar(final String text) {
-        Snackbar.make(findViewById(R.id.drawer_layout), text, Snackbar.LENGTH_LONG).show();
+        View container = findViewById(R.id.drawer_layout);
+        if (container != null) {
+            Snackbar.make(container, text, Snackbar.LENGTH_LONG).show();
+        }
     }
 
+    /**
+     * Shows a {@link Snackbar}.
+     *
+     * @param mainTextStringId The id for the string resource for the Snackbar text.
+     * @param actionStringId   The text of the action item.
+     * @param listener         The listener associated with the Snackbar action.
+     */
     private void showSnackbar(final int mainTextStringId, final int actionStringId,
                               View.OnClickListener listener) {
         Snackbar.make(findViewById(android.R.id.content),
@@ -204,6 +250,9 @@ public class MainActivity extends AppCompatActivity
                 .setAction(getString(actionStringId), listener).show();
     }
 
+    /**
+     * Return the current state of the permissions needed.
+     */
     private boolean checkPermissions() {
         int permissionState = ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_COARSE_LOCATION);
@@ -221,7 +270,11 @@ public class MainActivity extends AppCompatActivity
                 ActivityCompat.shouldShowRequestPermissionRationale(this,
                         Manifest.permission.ACCESS_COARSE_LOCATION);
 
+        // Provide an additional rationale to the user. This would happen if the user denied the
+        // request previously, but didn't check the "Don't ask again" checkbox.
         if (shouldProvideRationale) {
+            Log.i(TAG, "Displaying permission rationale to provide additional context.");
+
             showSnackbar(R.string.permission_rationale, android.R.string.ok,
                     new View.OnClickListener() {
                         @Override
@@ -232,22 +285,46 @@ public class MainActivity extends AppCompatActivity
                     });
 
         } else {
+            Log.i(TAG, "Requesting permission");
+            // Request permission. It's possible this can be auto answered if device policy
+            // sets the permission in a given state or the user denied the permission
+            // previously and checked "Never ask again".
             startLocationPermissionRequest();
         }
     }
 
+    /**
+     * Callback received when a permissions request has been completed.
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
+        Log.i(TAG, "onRequestPermissionResult");
         if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
             if (grantResults.length <= 0) {
+                // If user interaction was interrupted, the permission request is cancelled and you
+                // receive empty arrays.
+                Log.i(TAG, "User interaction was cancelled.");
             } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted.
                 getLastLocation();
             } else {
+                // Permission denied.
+
+                // Notify the user via a SnackBar that they have rejected a core permission for the
+                // app, which makes the Activity useless. In a real app, core permissions would
+                // typically be best requested during a welcome-screen flow.
+
+                // Additionally, it is important to remember that a permission might have been
+                // rejected without asking the user for permission (device policy or "Never ask
+                // again" prompts). Therefore, a user interface affordance is typically implemented
+                // when permissions are denied. Otherwise, your app could appear unresponsive to
+                // touches or interactions which have required permissions.
                 showSnackbar(R.string.permission_denied_explanation, R.string.settings,
                         new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
+                                // Build intent that displays the App settings screen.
                                 Intent intent = new Intent();
                                 intent.setAction(
                                         Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
@@ -559,8 +636,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
-
-        Log.i("Map","Ready");
     }
 
     private class GetAllStops extends AsyncTask<Void, Void, JSONObject> {
