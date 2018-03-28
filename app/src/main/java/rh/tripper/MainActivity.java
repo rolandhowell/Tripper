@@ -1,16 +1,23 @@
 package rh.tripper;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -27,6 +34,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -35,6 +44,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -56,7 +67,7 @@ public class MainActivity extends AppCompatActivity
 
     private GoogleMap map;
     private DrawerLayout mDrawerLayout;
-    //private FusedLocationProviderClient mFusedLocationClient;
+    private FusedLocationProviderClient mFusedLocationClient;
     String email = null;
     Context context = null;
     JSONObject tripsJsonObject = null;
@@ -68,6 +79,10 @@ public class MainActivity extends AppCompatActivity
     Integer currentTrip = null;
     Boolean result = false;
 
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
+    protected Location mLastLocation;
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,10 +90,12 @@ public class MainActivity extends AppCompatActivity
         context = this;
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        mapFragment.getMapAsync(MainActivity.this);
+        mapFragment.getMapAsync(this);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
 
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -87,22 +104,14 @@ public class MainActivity extends AppCompatActivity
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 builder.setCancelable(false)
                         .setTitle("Add a stop")
+                        .setMessage("How do you want to add your stop?")
                         .setPositiveButton("Current location", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
-                                /*mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
-                                if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                                    mFusedLocationClient.getLastLocation()
-                                            .addOnSuccessListener(new OnSuccessListener<Location>() {
-                                                @Override
-                                                public void onSuccess(Location location) {
-                                                    // Got last known location. In some rare situations this can be null.
-                                                    if (location != null) {
-                                                        // Logic to handle location object
-                                                        Log.i("Location:",location.toString());
-                                                    }
-                                                }
-                                            });
-                                }*/
+                                if (!checkPermissions()) {
+                                    requestPermissions();
+                                } else {
+                                    getLastLocation();
+                                }
                             }
                         })
                         .setNegativeButton("Search", new DialogInterface.OnClickListener() {
@@ -153,6 +162,104 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        Integer ID = preferences.getInt("Current Trip", 0);
+
+        if(ID > 0)
+        {
+            currentTrip = ID;
+            tripIDForStops = String.valueOf(currentTrip);
+
+            MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
+            getAllStops.execute();
+        }
+    }
+
+    @SuppressWarnings("MissingPermission")
+    private void getLastLocation() {
+        mFusedLocationClient.getLastLocation()
+                .addOnCompleteListener(this, new OnCompleteListener<Location>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Location> task) {
+                            if (task.isSuccessful() && task.getResult() != null) {
+                                mLastLocation = task.getResult();
+
+                            } else {
+                                Log.w(TAG, "getLastLocation:exception", task.getException());
+                                showSnackbar(getString(R.string.no_location_detected));
+                            }
+                    }
+                });
+    }
+
+    private void showSnackbar(final String text) {
+        Snackbar.make(findViewById(R.id.drawer_layout), text, Snackbar.LENGTH_LONG).show();
+    }
+
+    private void showSnackbar(final int mainTextStringId, final int actionStringId,
+                              View.OnClickListener listener) {
+        Snackbar.make(findViewById(android.R.id.content),
+                getString(mainTextStringId),
+                Snackbar.LENGTH_INDEFINITE)
+                .setAction(getString(actionStringId), listener).show();
+    }
+
+    private boolean checkPermissions() {
+        int permissionState = ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION);
+        return permissionState == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void startLocationPermissionRequest() {
+        ActivityCompat.requestPermissions(MainActivity.this,
+                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                REQUEST_PERMISSIONS_REQUEST_CODE);
+    }
+
+    private void requestPermissions() {
+        boolean shouldProvideRationale =
+                ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION);
+
+        if (shouldProvideRationale) {
+            showSnackbar(R.string.permission_rationale, android.R.string.ok,
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            // Request permission
+                            startLocationPermissionRequest();
+                        }
+                    });
+
+        } else {
+            startLocationPermissionRequest();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
+            if (grantResults.length <= 0) {
+            } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getLastLocation();
+            } else {
+                showSnackbar(R.string.permission_denied_explanation, R.string.settings,
+                        new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                Intent intent = new Intent();
+                                intent.setAction(
+                                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                Uri uri = Uri.fromParts("package",
+                                        BuildConfig.APPLICATION_ID, null);
+                                intent.setData(uri);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(intent);
+                            }
+                        });
+            }
+        }
     }
 
     private class GetAllTrips extends AsyncTask<String, Void, JSONObject> {
@@ -453,17 +560,7 @@ public class MainActivity extends AppCompatActivity
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
 
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Integer ID = preferences.getInt("Current Trip", 0);
-
-        if(ID > 0)
-        {
-            currentTrip = ID;
-            tripIDForStops = String.valueOf(currentTrip);
-
-            MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
-            getAllStops.execute();
-        }
+        Log.i("Map","Ready");
     }
 
     private class GetAllStops extends AsyncTask<Void, Void, JSONObject> {
@@ -525,8 +622,6 @@ public class MainActivity extends AppCompatActivity
                     String stopName = stopsObj.getString("stopName");
                     String stopID = stopsObj.getString("stopID");
 
-                    Log.i("Setting ID: ", stopID);
-
                     Marker markerObj;
 
                     LatLng marker = new LatLng(lat, lng);
@@ -564,7 +659,6 @@ public class MainActivity extends AppCompatActivity
                                     TextView arrivalDate = findViewById(R.id.bottom_arrival_date);
                                     TextView deptDate = findViewById(R.id.bottom_dept_date);
 
-                                    Log.i("Clicking ID:", ID);
                                     //Toast.makeText(context, stopObject.getString("stopID") + " " + ID, Toast.LENGTH_SHORT).show();
                                     stopName.setText(stopObject.getString("stopName"));
                                     stopDesc.setText(stopObject.getString("stopDesc"));
