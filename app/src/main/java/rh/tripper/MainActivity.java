@@ -1,6 +1,7 @@
 package rh.tripper;
 
 import android.Manifest;
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -30,6 +31,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -60,8 +62,11 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
@@ -79,6 +84,11 @@ public class MainActivity extends AppCompatActivity
     BottomSheetBehavior bottomSheetBehavior = null;
     Integer currentTrip = null;
     Boolean result = false;
+
+    Calendar calendar = null;
+    EditText stopArrivalDateBox = null;
+    EditText stopDeptDateBox = null;
+    int dateSwitch = 0;
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
@@ -112,11 +122,37 @@ public class MainActivity extends AppCompatActivity
                                     final View addStopDialogView = View.inflate(context, R.layout.add_stop_dialog, null);
 
                                     final EditText stopNameBox = addStopDialogView.findViewById(R.id.addStopName);
-                                    final EditText stopArivalDateBox = addStopDialogView.findViewById(R.id.addStopStartDate);
-                                    final EditText stopDeptDateBox = addStopDialogView.findViewById(R.id.addStopEndDate);
+                                    stopArrivalDateBox = addStopDialogView.findViewById(R.id.addStopStartDate);
+                                    stopDeptDateBox = addStopDialogView.findViewById(R.id.addStopEndDate);
                                     final EditText stopDescBox = addStopDialogView.findViewById(R.id.addStopDesc);
 
+                                    calendar = Calendar.getInstance();
 
+                                    final DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
+                                        @Override
+                                        public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                                            calendar.set(Calendar.YEAR, year);
+                                            calendar.set(Calendar.MONTH, monthOfYear);
+                                            calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                                            updateLabel();
+                                        }
+                                    };
+
+                                    stopArrivalDateBox.setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View view) {
+                                            dateSwitch = 1;
+                                            new DatePickerDialog(MainActivity.this, date, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+                                        }
+                                    });
+
+                                    stopDeptDateBox.setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View view) {
+                                            dateSwitch = 2;
+                                            new DatePickerDialog(MainActivity.this, date, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+                                        }
+                                    });
 
                                     final AlertDialog.Builder addStopDetailsDialog = new AlertDialog.Builder(context);
                                     addStopDetailsDialog.setView(addStopDialogView)
@@ -127,7 +163,7 @@ public class MainActivity extends AppCompatActivity
                                                     boolean full = true;
 
                                                     String stopName = stopNameBox.getText().toString();
-                                                    String stopArrivalDate = stopArivalDateBox.getText().toString();
+                                                    String stopArrivalDate = stopArrivalDateBox.getText().toString();
                                                     String stopDeptDate = stopDeptDateBox.getText().toString();
                                                     String stopDesc = stopDescBox.getText().toString();
 
@@ -139,7 +175,7 @@ public class MainActivity extends AppCompatActivity
 
                                                     if (stopArrivalDate.length() == 0)
                                                     {
-                                                        stopArivalDateBox.setError("Required");
+                                                        stopArrivalDateBox.setError("Required");
                                                         full = false;
                                                     }
 
@@ -157,8 +193,16 @@ public class MainActivity extends AppCompatActivity
 
                                                     if(full)
                                                     {
-                                                        //MainActivity.AddNewStopToTrip addNewStopToTrip = new MainActivity.AddNewStopToTrip();
-                                                        //addNewStopToTrip.execute();
+                                                        String [] stopDetails = new String[6];
+                                                        stopDetails[0] = stopName;
+                                                        stopDetails[1] = stopArrivalDate;
+                                                        stopDetails[2] = stopDeptDate;
+                                                        stopDetails[3] = stopDesc;
+                                                        stopDetails[4] = String.valueOf(mLastLocation.getLatitude());
+                                                        stopDetails[5] = String.valueOf(mLastLocation.getLongitude());
+
+                                                        MainActivity.AddNewStopToTrip addNewStopToTrip = new MainActivity.AddNewStopToTrip();
+                                                        addNewStopToTrip.execute(stopDetails);
 
                                                         Log.i(TAG, stopName + ", " + stopArrivalDate + ", " + stopDeptDate  + ", " + stopDesc + ", " + String.valueOf(mLastLocation.getLatitude()) + ", " + String.valueOf(mLastLocation.getLongitude()));
                                                     }
@@ -244,6 +288,17 @@ public class MainActivity extends AppCompatActivity
             requestPermissions();
         } else {
             getLastLocation();
+        }
+    }
+
+    private void updateLabel() {
+        String myFormat = "dd/mm/yy";
+        SimpleDateFormat sdf = new SimpleDateFormat(myFormat, Locale.ENGLISH);
+
+        if(dateSwitch == 1) {
+            stopArrivalDateBox.setText(sdf.format(calendar.getTime()));
+        } else if (dateSwitch == 2) {
+            stopDeptDateBox.setText(sdf.format(calendar.getTime()));
         }
     }
 
@@ -852,7 +907,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private class AddNewStopToTrip extends AsyncTask<Void, Void, Boolean>{
+    private class AddNewStopToTrip extends AsyncTask<String, Void, Boolean>{
 
         @Override
         protected void onPreExecute() {
@@ -860,12 +915,12 @@ public class MainActivity extends AppCompatActivity
         }
 
         @Override
-        protected Boolean doInBackground(Void... voids) {
+        protected Boolean doInBackground(String... stopDetails) {
             HttpURLConnection urlConnection = null;
             InputStream in = null;
 
             try{
-                URL url = new URL("http://10.0.2.2:3000/addstop?tripid="+"&email="+"&arrivaldate="+"&deptdate="+"&stopname="+"&stopdesc="+"&lat="+"&long="+"");
+                URL url = new URL("http://10.0.2.2:3000/addstop?tripid="+ currentTrip + "&email=" + email + "&arrivaldate=" + stopDetails[1] +"&deptdate=" + stopDetails[2] + "&stopname=" + stopDetails[0] + "&stopdesc=" + stopDetails[3] + "&lat=" + stopDetails[4] + "&long=" + stopDetails[5]);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));

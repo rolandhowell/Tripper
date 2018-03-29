@@ -15,18 +15,28 @@
             android:id="@+id/addStopName"
             android:hint="@string/stop_name"
             android:textSize="14dp"/>
-        <EditText
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/addStopStartDate"
-            android:hint="@string/arrival_date"
-            android:textSize="14dp"/>
-        <EditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/addStopEndDate"
-            android:hint="@string/departure_date"
-            android:textSize="14dp"/>
+            android:orientation="horizontal"
+            android:weightSum="2">
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/addStopStartDate"
+                android:hint="@string/arrival_date"
+                android:textSize="14dp"
+                android:layout_weight="1"/>
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/addStopEndDate"
+                android:hint="@string/departure_date"
+                android:textSize="14dp"
+                android:layout_weight="1"/>
+        </LinearLayout>
+
         <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
