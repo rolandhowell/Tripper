@@ -110,10 +110,12 @@ public class MainActivity extends AppCompatActivity
                                 if(mLastLocation != null){
                                     final View addStopDialogView = View.inflate(context, R.layout.add_stop_dialog, null);
 
-                                    final EditText stopName = addStopDialogView.findViewById(R.id.addStopName);
-                                    final EditText stopArivalDate = addStopDialogView.findViewById(R.id.addStopStartDate);
-                                    final EditText stopDeptDate = addStopDialogView.findViewById(R.id.addStopEndDate);
-                                    final EditText stopDesc = addStopDialogView.findViewById(R.id.addStopDesc);
+                                    final EditText stopNameBox = addStopDialogView.findViewById(R.id.addStopName);
+                                    final EditText stopArivalDateBox = addStopDialogView.findViewById(R.id.addStopStartDate);
+                                    final EditText stopDeptDateBox = addStopDialogView.findViewById(R.id.addStopEndDate);
+                                    final EditText stopDescBox = addStopDialogView.findViewById(R.id.addStopDesc);
+
+
 
                                     AlertDialog.Builder builder = new AlertDialog.Builder(context);
                                     builder.setView(addStopDialogView)
@@ -121,7 +123,44 @@ public class MainActivity extends AppCompatActivity
                                             .setCancelable(false)
                                             .setPositiveButton("Add", new DialogInterface.OnClickListener() {
                                                 public void onClick(DialogInterface dialog, int id) {
+                                                    boolean full = true;
 
+                                                    String stopName = stopNameBox.getText().toString();
+                                                    String stopArrivalDate = stopArivalDateBox.getText().toString();
+                                                    String stopDeptDate = stopDeptDateBox.getText().toString();
+                                                    String stopDesc = stopDescBox.getText().toString();
+
+                                                    if(stopName.length() == 0)
+                                                    {
+                                                        stopNameBox.setError("Required");
+                                                        full = false;
+                                                    }
+
+                                                    if (stopArrivalDate.length() == 0)
+                                                    {
+                                                        stopArivalDateBox.setError("Required");
+                                                        full = false;
+                                                    }
+
+                                                    if (stopDeptDate.length() == 0)
+                                                    {
+                                                        stopDeptDateBox.setError("Required");
+                                                        full = false;
+                                                    }
+
+                                                    if (stopDesc.length() == 0)
+                                                    {
+                                                        stopDescBox.setError("Required");
+                                                        full = false;
+                                                    }
+
+                                                    if(full)
+                                                    {
+                                                        //MainActivity.AddNewStopToTrip addNewStopToTrip = new MainActivity.AddNewStopToTrip();
+                                                        //addNewStopToTrip.execute();
+
+                                                        Log.i(TAG, "Adding new stop");
+                                                    }
                                                 }
                                             })
                                             .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -811,12 +850,8 @@ public class MainActivity extends AppCompatActivity
             }
         }
     }
-/*
-    private void GetCurrentLocation (){
 
-    }
-
-    private class addNewStopToTrip extends AsyncTask<Void, Void, Boolean>{
+    private class AddNewStopToTrip extends AsyncTask<Void, Void, Boolean>{
 
         @Override
         protected void onPreExecute() {
@@ -853,5 +888,5 @@ public class MainActivity extends AppCompatActivity
 
 
         }
-    }*/
+    }
 }
