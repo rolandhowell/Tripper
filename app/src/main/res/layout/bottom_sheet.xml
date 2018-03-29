@@ -10,17 +10,44 @@
     app:behavior_peekHeight="80dp"
     app:layout_behavior="android.support.design.widget.BottomSheetBehavior">
 
-    <TextView
-        android:id="@+id/bottom_stop_name"
+    <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/bg"
-        android:padding="10dp"
-        android:text="Title"
-        android:textAlignment="viewStart"
-        android:textColor="@color/primaryTextColor"
-        android:textSize="20sp"
-        android:typeface="normal"/>
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/bottom_stop_name"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@color/bg"
+            android:padding="10dp"
+            android:text="Title"
+            android:textAlignment="viewStart"
+            android:textColor="@color/primaryTextColor"
+            android:textSize="20sp"
+            android:typeface="normal"
+            app:layout_constraintEnd_toStartOf="@+id/stopEditButton" />
+
+        <Button
+            android:id="@+id/stopEditButton"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginTop="13dp"
+            android:background="@drawable/ic_mode_edit_black_24dp"
+            app:layout_constraintEnd_toStartOf="@+id/stopDelButton"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/stopDelButton"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginTop="13dp"
+            android:background="@drawable/ic_delete_black_24dp"
+            android:padding="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </android.support.constraint.ConstraintLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
