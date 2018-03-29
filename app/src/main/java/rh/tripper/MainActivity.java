@@ -24,6 +24,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -117,11 +118,11 @@ public class MainActivity extends AppCompatActivity
 
 
 
-                                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                                    builder.setView(addStopDialogView)
+                                    final AlertDialog.Builder addStopDetailsDialog = new AlertDialog.Builder(context);
+                                    addStopDetailsDialog.setView(addStopDialogView)
                                             .setTitle("Add stop details")
                                             .setCancelable(false)
-                                            .setPositiveButton("Add", new DialogInterface.OnClickListener() {
+                                            .setNegativeButton("Add", new DialogInterface.OnClickListener() {
                                                 public void onClick(DialogInterface dialog, int id) {
                                                     boolean full = true;
 
@@ -130,7 +131,7 @@ public class MainActivity extends AppCompatActivity
                                                     String stopDeptDate = stopDeptDateBox.getText().toString();
                                                     String stopDesc = stopDescBox.getText().toString();
 
-                                                    if(stopName.length() == 0)
+                                                    if(TextUtils.isEmpty(stopName))
                                                     {
                                                         stopNameBox.setError("Required");
                                                         full = false;
@@ -159,11 +160,11 @@ public class MainActivity extends AppCompatActivity
                                                         //MainActivity.AddNewStopToTrip addNewStopToTrip = new MainActivity.AddNewStopToTrip();
                                                         //addNewStopToTrip.execute();
 
-                                                        Log.i(TAG, "Adding new stop");
+                                                        Log.i(TAG, stopName + ", " + stopArrivalDate + ", " + stopDeptDate  + ", " + stopDesc + ", " + String.valueOf(mLastLocation.getLatitude()) + ", " + String.valueOf(mLastLocation.getLongitude()));
                                                     }
                                                 }
                                             })
-                                            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                            .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
                                                 public void onClick(DialogInterface dialog, int id) {
                                                     dialog.cancel();
                                                 }
