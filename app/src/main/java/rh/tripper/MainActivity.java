@@ -1,6 +1,7 @@
 package rh.tripper;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -71,15 +72,14 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
 
-    private GoogleMap map;
-    private DrawerLayout mDrawerLayout;
-    private FusedLocationProviderClient mFusedLocationClient;
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
+    protected Location mLastLocation;
     String email = null;
     Context context = null;
     JSONObject tripsJsonObject = null;
     JSONObject stopsJsonObject = null;
     NavigationView navigationView = null;
-    String tripArray[] = {};
     String tripIDForStops = null;
     BottomSheetBehavior bottomSheetBehavior = null;
     Integer currentTrip = null;
@@ -89,10 +89,9 @@ public class MainActivity extends AppCompatActivity
     EditText stopArrivalDateBox = null;
     EditText stopDeptDateBox = null;
     int dateSwitch = 0;
-
-    private static final String TAG = MainActivity.class.getSimpleName();
-    private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
-    protected Location mLastLocation;
+    private GoogleMap map;
+    private DrawerLayout mDrawerLayout;
+    private FusedLocationProviderClient mFusedLocationClient;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -302,7 +301,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @SuppressWarnings("MissingPermission")
+    @SuppressLint("MissingPermission")
     private void getLastLocation() {
         mFusedLocationClient.getLastLocation()
                 .addOnCompleteListener(this, new OnCompleteListener<Location>() {
@@ -318,11 +317,6 @@ public class MainActivity extends AppCompatActivity
                 });
     }
 
-    /**
-     * Shows a {@link Snackbar} using {@code text}.
-     *
-     * @param text The Snackbar text.
-     */
     private void showSnackbar(final String text) {
         View container = findViewById(R.id.drawer_layout);
         if (container != null) {
@@ -330,13 +324,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    /**
-     * Shows a {@link Snackbar}.
-     *
-     * @param mainTextStringId The id for the string resource for the Snackbar text.
-     * @param actionStringId   The text of the action item.
-     * @param listener         The listener associated with the Snackbar action.
-     */
     private void showSnackbar(final int mainTextStringId, final int actionStringId,
                               View.OnClickListener listener) {
         Snackbar.make(findViewById(android.R.id.content),
@@ -345,9 +332,6 @@ public class MainActivity extends AppCompatActivity
                 .setAction(getString(actionStringId), listener).show();
     }
 
-    /**
-     * Return the current state of the permissions needed.
-     */
     private boolean checkPermissions() {
         int permissionState = ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_COARSE_LOCATION);
@@ -388,9 +372,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    /**
-     * Callback received when a permissions request has been completed.
-     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
@@ -434,6 +415,113 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.app_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                mDrawerLayout.openDrawer(GravityCompat.START);
+                return true;
+            case R.id.action_edit:
+                MainActivity.GetTripName getTripName = new MainActivity.GetTripName();
+                getTripName.execute();
+                break;
+            case R.id.action_test:
+                Toast.makeText(context, "Testing", Toast.LENGTH_LONG).show();
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        // Handle navigation view item clicks here.
+
+        if (item.getItemId() == R.id.profile) {
+            // Handle the camera action
+            Toast.makeText(context, String.valueOf(item.getItemId()), Toast.LENGTH_LONG).show();
+        } else if (item.getItemId() == R.id.settings) {
+            Toast.makeText(context, String.valueOf(item.getItemId()), Toast.LENGTH_LONG).show();
+        } else if (item.getItemId() == R.id.logout) {
+            Toast.makeText(context, String.valueOf(item.getItemId()), Toast.LENGTH_LONG).show();
+        } else if (item.getItemId() == R.id.addTripID) {
+
+            final View addTripView = View.inflate(context, R.layout.add_trip_dialog, null);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            builder.setView(addTripView)
+                    .setCancelable(false)
+                    .setPositiveButton("Add", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            EditText tripname = addTripView.findViewById(R.id.addTripName);
+
+                            String tripNameStr = tripname.getText().toString();
+
+                            if(tripNameStr.length() > 0) {
+
+                                MainActivity.CreateNewTrip createNewTrip = new MainActivity.CreateNewTrip();
+                                createNewTrip.execute(tripNameStr);
+
+                                dialog.cancel();
+                            } else
+                            {
+                                tripname.setError("Required");
+                            }
+                        }
+                    })
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                        }
+                    }).show();
+        } else {
+                currentTrip = item.getItemId();
+
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putInt("Current Trip", currentTrip);
+                editor.apply();
+
+                bottomSheetBehavior.setPeekHeight(0);
+
+                tripIDForStops = String.valueOf(currentTrip);
+
+                MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
+                getAllStops.execute();
+        }
+
+
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        map = googleMap;
+    }
+
+    @SuppressLint("StaticFieldLeak")
     private class GetAllTrips extends AsyncTask<String, Void, JSONObject> {
 
         @Override
@@ -509,6 +597,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    @SuppressLint("StaticFieldLeak")
     private class GetTripName extends AsyncTask<Void, Void, String> {
 
         @Override
@@ -579,6 +668,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    @SuppressLint("StaticFieldLeak")
     private class SetTripName extends AsyncTask<String, Void, Boolean> {
 
         @Override
@@ -627,112 +717,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.app_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                mDrawerLayout.openDrawer(GravityCompat.START);
-                return true;
-            case R.id.action_edit:
-                MainActivity.GetTripName getTripName = new MainActivity.GetTripName();
-                getTripName.execute();
-                break;
-            case R.id.action_test:
-                Toast.makeText(context, "Testing", Toast.LENGTH_LONG).show();
-                break;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    @SuppressWarnings("StatementWithEmptyBody")
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-
-        if (item.getItemId() == R.id.profile) {
-            // Handle the camera action
-            Toast.makeText(context, String.valueOf(item.getItemId()), Toast.LENGTH_LONG).show();
-        } else if (item.getItemId() == R.id.settings) {
-            Toast.makeText(context, String.valueOf(item.getItemId()), Toast.LENGTH_LONG).show();
-        } else if (item.getItemId() == R.id.logout) {
-            Toast.makeText(context, String.valueOf(item.getItemId()), Toast.LENGTH_LONG).show();
-        } else if (item.getItemId() == R.id.addTripID) {
-
-            final View addTripView = View.inflate(context, R.layout.add_trip_dialog, null);
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-            builder.setView(addTripView)
-                    .setCancelable(false)
-                    .setPositiveButton("Add", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            EditText tripname = addTripView.findViewById(R.id.addTripName);
-
-                            String tripNameStr = tripname.getText().toString();
-
-                            if(tripNameStr.length() > 0) {
-
-                                MainActivity.CreateNewTrip createNewTrip = new MainActivity.CreateNewTrip();
-                                createNewTrip.execute(tripNameStr);
-
-                                dialog.cancel();
-                            } else
-                            {
-                                tripname.setError("Required");
-                            }
-                        }
-                    })
-                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            dialog.cancel();
-                        }
-                    }).show();
-        } else {
-                currentTrip = item.getItemId();
-
-                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-                SharedPreferences.Editor editor = sharedPref.edit();
-                editor.putInt("Current Trip", currentTrip);
-                editor.apply();
-
-                bottomSheetBehavior.setPeekHeight(0);
-
-                tripIDForStops = String.valueOf(currentTrip);
-
-                MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
-                getAllStops.execute();
-        }
-
-
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
-    }
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        map = googleMap;
-    }
-
+    @SuppressLint("StaticFieldLeak")
     private class GetAllStops extends AsyncTask<Void, Void, JSONObject> {
 
         @Override
@@ -858,6 +843,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    @SuppressLint("StaticFieldLeak")
     private class CreateNewTrip extends AsyncTask<String, Void, Boolean> {
 
         @Override
@@ -907,6 +893,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    @SuppressLint("StaticFieldLeak")
     private class AddNewStopToTrip extends AsyncTask<String, Void, Boolean>{
 
         @Override

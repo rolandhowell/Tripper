@@ -10,7 +10,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.RelativeLayout;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -27,7 +26,6 @@ public class LandingActivity extends AppCompatActivity {
     Button regButton = null;
     EditText emailBox = null;
     EditText passwordBox = null;
-    RelativeLayout progress = null;
     String email = null;
     String password = null;
     Boolean result = false;
@@ -89,8 +87,6 @@ public class LandingActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            progress = findViewById(R.id.progressBarLogin);
-            progress.setVisibility(View.VISIBLE);
         }
 
         @Override
@@ -122,7 +118,6 @@ public class LandingActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Boolean resultB) {
-            progress.setVisibility(View.INVISIBLE);
 
             if (result == true)
             {

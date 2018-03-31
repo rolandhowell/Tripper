@@ -12,13 +12,14 @@
 
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:elevation="500sp">
 
         <TextView
             android:id="@+id/bottom_stop_name"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:background="@color/bg"
+            android:background="@color/primaryLightColor"
             android:padding="10dp"
             android:text="Title"
             android:textAlignment="viewStart"
