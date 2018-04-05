@@ -14,7 +14,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/addStopName"
             android:hint="@string/stop_name"
-            android:textSize="14dp"/>
+            style="@style/normal_edittext"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -26,14 +26,14 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/addStopStartDate"
                 android:hint="@string/arrival_date"
-                android:textSize="14dp"
+                style="@style/normal_edittext"
                 android:layout_weight="1"/>
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/addStopEndDate"
                 android:hint="@string/departure_date"
-                android:textSize="14dp"
+                style="@style/normal_edittext"
                 android:layout_weight="1"/>
         </LinearLayout>
 
@@ -42,7 +42,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/addStopDesc"
             android:hint="@string/stop_description"
-            android:textSize="14dp"
+            style="@style/normal_edittext"
             android:lines="5"
             android:gravity="top"/>
 

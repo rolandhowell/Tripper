@@ -4,14 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="rh.tripper.RegisterActivity">
+    tools:context="rh.tripper.RegisterActivity"
+    android:background="@color/bg">
 
     <android.support.constraint.ConstraintLayout
-        android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:layout_editor_absoluteX="20dp"
-        tools:layout_editor_absoluteY="20dp">
+        android:layout_margin="20dp"
+        android:background="@color/bgLight"
+        android:padding="10dp"
+        android:elevation="500sp">
 
         <TextView
             android:id="@+id/joinUpText"
@@ -36,10 +38,10 @@
             android:layout_marginTop="8dp"
             android:hint="@string/regName"
             android:inputType="textPersonName"
-            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/joinUpText" />
+            app:layout_constraintTop_toBottomOf="@+id/joinUpText"
+            style="@style/normal_edittext"/>
 
         <EditText
             android:id="@+id/emailBoxNew"
@@ -49,10 +51,10 @@
             android:layout_marginStart="8dp"
             android:hint="@string/emailHint"
             android:inputType="textEmailAddress"
-            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/nameBoxNew" />
+            app:layout_constraintTop_toBottomOf="@+id/nameBoxNew"
+            style="@style/normal_edittext"/>
 
         <EditText
             android:id="@+id/passwordBoxNew"
@@ -63,10 +65,10 @@
             android:layout_marginTop="8dp"
             android:hint="@string/passwordHint"
             android:inputType="textPassword"
-            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/emailBoxNew" />
+            app:layout_constraintTop_toBottomOf="@+id/emailBoxNew"
+            style="@style/normal_edittext"/>
 
         <EditText
             android:id="@+id/cityBoxNew"
@@ -76,10 +78,10 @@
             android:layout_marginStart="8dp"
             android:hint="@string/city"
             android:inputType="text"
-            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/passwordBoxNew" />
+            app:layout_constraintTop_toBottomOf="@+id/passwordBoxNew"
+            style="@style/normal_edittext"/>
 
         <EditText
             android:id="@+id/countryBoxNew"
@@ -90,10 +92,10 @@
             android:layout_marginTop="8dp"
             android:hint="@string/country"
             android:inputType="text"
-            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/cityBoxNew" />
+            app:layout_constraintTop_toBottomOf="@+id/cityBoxNew"
+            style="@style/normal_edittext"/>
 
         <EditText
             android:id="@+id/dobBox"
@@ -105,22 +107,20 @@
             android:clickable="true"
             android:focusable="false"
             android:hint="@string/dob"
-            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/countryBoxNew" />
+            app:layout_constraintTop_toBottomOf="@+id/countryBoxNew"
+            style="@style/normal_edittext"/>
 
         <CheckBox
             android:id="@+id/checkBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
-            android:layout_marginTop="175dp"
+            android:layout_marginTop="8dp"
             android:text="@string/TandCs"
             android:textSize="14sp"
-            app:layout_constraintBottom_toTopOf="@+id/registerButtonNew"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/dobBox" />
@@ -130,16 +130,16 @@
             style="@style/Widget.AppCompat.Button.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
             android:background="@color/primaryColor"
             android:text="@string/regButton"
             android:textAllCaps="false"
             android:textSize="18sp"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/checkBox" />
 
     </android.support.constraint.ConstraintLayout>
 

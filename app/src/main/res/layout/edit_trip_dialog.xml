@@ -20,7 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/editTripName"
-            android:textSize="14sp"/>
+            style="@style/normal_edittext"/>
 
     </LinearLayout>
 

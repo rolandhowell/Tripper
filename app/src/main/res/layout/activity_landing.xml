@@ -5,112 +5,114 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="rh.tripper.LandingActivity"
-    android:theme="@style/AppTheme.NoActionBar">
+    android:theme="@style/AppTheme.NoActionBar"
+    android:background="@color/bg"
+    android:clipToPadding="false"
+    android:padding="20dp">
 
-    <ImageView
-        android:id="@+id/tripperLogo"
-        android:layout_width="wrap_content"
-        android:layout_height="150dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
-        android:contentDescription="@string/tripperLogo"
-        android:scaleType="fitCenter"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/logo" />
-
-    <TextView
-        android:id="@+id/tagline"
-        android:layout_width="wrap_content"
-        android:layout_height="19dp"
-        android:layout_below="@id/tripperLogo"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="-200dp"
-        android:text="@string/tagline"
-        app:layout_constraintTop_toBottomOf="@+id/tripperLogo"
-        tools:layout_editor_absoluteX="107dp" />
-
-    <EditText
-        android:id="@+id/emailBox"
+    <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/tagline"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginStart="24dp"
-        android:hint="@string/emailHint"
-        android:inputType="textEmailAddress"
-        android:textSize="14sp"
-        app:layout_constraintBottom_toTopOf="@+id/loginButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:layout_height="match_parent"
+        android:background="@color/bgLight"
+        android:padding="20dp"
+        android:elevation="500sp">
+        <ImageView
+            android:id="@+id/tripperLogo"
+            android:layout_width="wrap_content"
+            android:layout_height="150dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="16dp"
+            android:contentDescription="@string/tripperLogo"
+            android:scaleType="fitCenter"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/logo" />
 
-    <EditText
-        android:id="@+id/passwordBox"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_below="@id/emailBox"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginStart="24dp"
-        android:hint="@string/passwordHint"
-        android:inputType="textPassword"
-        android:textSize="14sp"
-        app:layout_constraintBottom_toTopOf="@+id/emailBox"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        <TextView
+            android:id="@+id/tagline"
+            android:layout_width="wrap_content"
+            android:layout_height="19dp"
+            android:layout_below="@id/tripperLogo"
+            android:layout_centerHorizontal="true"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="-200dp"
+            android:text="@string/tagline"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tripperLogo" />
 
-    <android.support.v7.widget.AppCompatButton
-        android:id="@+id/loginButton"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/passwordBox"
-        android:layout_centerHorizontal="true"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:background="@color/primaryColor"
-        android:text="@string/loginButton"
-        android:textAllCaps="false"
-        android:textSize="18sp"
-        app:layout_constraintBottom_toTopOf="@+id/regPrompt"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        <EditText
+            android:id="@+id/emailBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/tagline"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="32dp"
+            android:hint="@string/emailHint"
+            android:inputType="textEmailAddress"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tagline"
+            style="@style/normal_edittext"/>
 
-    <TextView
-        android:id="@+id/regPrompt"
-        android:layout_width="wrap_content"
-        android:layout_height="19dp"
-        android:layout_below="@id/loginButton"
-        android:layout_centerHorizontal="true"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:text="@string/regPrompt"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="468dp" />
+        <EditText
+            android:id="@+id/passwordBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/emailBox"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="8dp"
+            android:hint="@string/passwordHint"
+            android:inputType="textPassword"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/emailBox"
+            style="@style/normal_edittext"/>
 
-    <android.support.v7.widget.AppCompatButton
-        android:id="@+id/registerButton"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/regPrompt"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:background="@color/primaryColor"
-        android:text="@string/regButton"
-        android:textAllCaps="false"
-        android:textSize="18sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/regPrompt" />
+        <android.support.v7.widget.AppCompatButton
+            android:id="@+id/loginButton"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/passwordBox"
+            android:layout_centerHorizontal="true"
+            android:background="@color/primaryColor"
+            android:text="@string/loginButton"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/passwordBox" />
+
+        <TextView
+            android:id="@+id/regPrompt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/loginButton"
+            android:layout_centerHorizontal="true"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="32dp"
+            android:text="@string/regPrompt"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/loginButton" />
+
+        <android.support.v7.widget.AppCompatButton
+            android:id="@+id/registerButton"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/regPrompt"
+            android:layout_centerHorizontal="true"
+            android:background="@color/primaryColor"
+            android:text="@string/regButton"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/regPrompt" />
+    </android.support.constraint.ConstraintLayout>
 
 </android.support.constraint.ConstraintLayout>

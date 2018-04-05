@@ -324,8 +324,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void showSnackbar(final int mainTextStringId, final int actionStringId,
-                              View.OnClickListener listener) {
+    private void showSnackbar(final int mainTextStringId, final int actionStringId, View.OnClickListener listener) {
         Snackbar.make(findViewById(android.R.id.content),
                 getString(mainTextStringId),
                 Snackbar.LENGTH_INDEFINITE)
@@ -373,8 +372,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         Log.i(TAG, "onRequestPermissionResult");
         if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
             if (grantResults.length <= 0) {
