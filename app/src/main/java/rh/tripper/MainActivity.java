@@ -3,11 +3,14 @@ package rh.tripper;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -63,6 +66,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -93,6 +97,9 @@ public class MainActivity extends AppCompatActivity
     private DrawerLayout mDrawerLayout;
     private FusedLocationProviderClient mFusedLocationClient;
 
+    Boolean offlineMode = false;
+    DatabaseHelper mDBHelper = null;
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -107,6 +114,11 @@ public class MainActivity extends AppCompatActivity
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
 
+        MainActivity.isConnectedToServer isConnectedToServer = new  MainActivity.isConnectedToServer();
+        isConnectedToServer.execute();
+
+        mDBHelper = new DatabaseHelper(this);
+
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -117,7 +129,7 @@ public class MainActivity extends AppCompatActivity
                         .setMessage("How do you want to add your stop?")
                         .setPositiveButton("Current location", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
-                                if(mLastLocation != null){
+                                if (mLastLocation != null) {
                                     final View addStopDialogView = View.inflate(context, R.layout.add_stop_dialog, null);
 
                                     final EditText stopNameBox = addStopDialogView.findViewById(R.id.addStopName);
@@ -166,33 +178,28 @@ public class MainActivity extends AppCompatActivity
                                                     String stopDeptDate = stopDeptDateBox.getText().toString();
                                                     String stopDesc = stopDescBox.getText().toString();
 
-                                                    if(TextUtils.isEmpty(stopName))
-                                                    {
+                                                    if (TextUtils.isEmpty(stopName)) {
                                                         stopNameBox.setError("Required");
                                                         full = false;
                                                     }
 
-                                                    if (stopArrivalDate.length() == 0)
-                                                    {
+                                                    if (stopArrivalDate.length() == 0) {
                                                         stopArrivalDateBox.setError("Required");
                                                         full = false;
                                                     }
 
-                                                    if (stopDeptDate.length() == 0)
-                                                    {
+                                                    if (stopDeptDate.length() == 0) {
                                                         stopDeptDateBox.setError("Required");
                                                         full = false;
                                                     }
 
-                                                    if (stopDesc.length() == 0)
-                                                    {
+                                                    if (stopDesc.length() == 0) {
                                                         stopDescBox.setError("Required");
                                                         full = false;
                                                     }
 
-                                                    if(full)
-                                                    {
-                                                        String [] stopDetails = new String[6];
+                                                    if (full) {
+                                                        String[] stopDetails = new String[6];
                                                         stopDetails[0] = stopName;
                                                         stopDetails[1] = stopArrivalDate;
                                                         stopDetails[2] = stopDeptDate;
@@ -203,7 +210,7 @@ public class MainActivity extends AppCompatActivity
                                                         MainActivity.AddNewStopToTrip addNewStopToTrip = new MainActivity.AddNewStopToTrip();
                                                         addNewStopToTrip.execute(stopDetails);
 
-                                                        Log.i(TAG, stopName + ", " + stopArrivalDate + ", " + stopDeptDate  + ", " + stopDesc + ", " + String.valueOf(mLastLocation.getLatitude()) + ", " + String.valueOf(mLastLocation.getLongitude()));
+                                                        Log.i(TAG, stopName + ", " + stopArrivalDate + ", " + stopDeptDate + ", " + stopDesc + ", " + String.valueOf(mLastLocation.getLatitude()) + ", " + String.valueOf(mLastLocation.getLongitude()));
                                                     }
                                                 }
                                             })
@@ -212,8 +219,7 @@ public class MainActivity extends AppCompatActivity
                                                     dialog.cancel();
                                                 }
                                             }).show();
-                                }
-                                else {
+                                } else {
                                     showSnackbar("Your location was not found");
                                 }
                             }
@@ -237,15 +243,12 @@ public class MainActivity extends AppCompatActivity
 
         Bundle extras = getIntent().getExtras();
 
-        if(extras != null) {
+        if (extras != null) {
             email = extras.getString("email");
         }
 
         // DEBUGGING
         email = "test@test.com";
-
-        MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
-        getAllTrips.execute(email);
 
         LinearLayout llBottomSheet = findViewById(R.id.bottom_sheet);
 
@@ -265,18 +268,6 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
-
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Integer ID = preferences.getInt("Current Trip", 0);
-
-        if(ID > 0)
-        {
-            currentTrip = ID;
-            tripIDForStops = String.valueOf(currentTrip);
-
-            MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
-            getAllStops.execute();
-        }
     }
 
     @Override
@@ -294,7 +285,7 @@ public class MainActivity extends AppCompatActivity
         String myFormat = "dd/mm/yy";
         SimpleDateFormat sdf = new SimpleDateFormat(myFormat, Locale.ENGLISH);
 
-        if(dateSwitch == 1) {
+        if (dateSwitch == 1) {
             stopArrivalDateBox.setText(sdf.format(calendar.getTime()));
         } else if (dateSwitch == 2) {
             stopDeptDateBox.setText(sdf.format(calendar.getTime()));
@@ -475,14 +466,13 @@ public class MainActivity extends AppCompatActivity
 
                             String tripNameStr = tripname.getText().toString();
 
-                            if(tripNameStr.length() > 0) {
+                            if (tripNameStr.length() > 0) {
 
                                 MainActivity.CreateNewTrip createNewTrip = new MainActivity.CreateNewTrip();
                                 createNewTrip.execute(tripNameStr);
 
                                 dialog.cancel();
-                            } else
-                            {
+                            } else {
                                 tripname.setError("Required");
                             }
                         }
@@ -493,19 +483,19 @@ public class MainActivity extends AppCompatActivity
                         }
                     }).show();
         } else {
-                currentTrip = item.getItemId();
+            currentTrip = item.getItemId();
 
-                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-                SharedPreferences.Editor editor = sharedPref.edit();
-                editor.putInt("Current Trip", currentTrip);
-                editor.apply();
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putInt("Current Trip", currentTrip);
+            editor.apply();
 
-                bottomSheetBehavior.setPeekHeight(0);
+            bottomSheetBehavior.setPeekHeight(0);
 
-                tripIDForStops = String.valueOf(currentTrip);
+            tripIDForStops = String.valueOf(currentTrip);
 
-                MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
-                getAllStops.execute();
+            MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
+            getAllStops.execute();
         }
 
 
@@ -530,32 +520,83 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected JSONObject doInBackground(String... emailIn) {
 
-            HttpURLConnection urlConnection;
-            InputStream in;
+            if(!offlineMode) {
+                //offline mode enabled
 
-            try{
-                URL url = new URL("http://10.0.2.2:3000/getalltrips?email="+ email );
-                urlConnection = (HttpURLConnection) url.openConnection();
-                in = new BufferedInputStream(urlConnection.getInputStream());
-                BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+                DatabaseHelper mDbHelper = new DatabaseHelper(context);
+
+                SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+                // Define a projection that specifies which columns from the database
+                // you will actually use after this query.
+                String[] projection = {
+                        DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID,
+                        DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME,
+                        DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE
+                };
+
+                // How you want the results sorted in the resulting Cursor
+                String sortOrder =
+                        DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE + " DESC";
+
+                Cursor cursor = db.query(
+                        DatabaseHelper.TripEntry.TABLE_NAME,   // The table to query
+                        projection,             // The array of columns to return (pass null to get all)
+                        null,              // The columns for the WHERE clause
+                        null,          // The values for the WHERE clause
+                        null,                   // don't group the rows
+                        null,                   // don't filter by row groups
+                        sortOrder               // The sort order
+                );
+
+                tripsJsonObject = new JSONObject();
+
+                String tripJSON = "{\"trips\":[";
+
+                while(cursor.moveToNext()) {
+                    tripJSON = tripJSON + "{\"tripID\":" + cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID)) + ", \"tripName\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME)) + "\",\"startDate\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE)) + "\"},";
+                }
+                cursor.close();
+
+                tripJSON = tripJSON.substring(0, tripJSON.length() - 1);
+
+                tripJSON = tripJSON + "]}";
+
                 StringBuilder responseStrBuilder = new StringBuilder();
-                String inputStr;
-                while ((inputStr = streamReader.readLine()) != null)
-                    responseStrBuilder.append(inputStr);
+                responseStrBuilder.append(tripJSON);
 
-                tripsJsonObject = new JSONObject(responseStrBuilder.toString());
-                urlConnection.disconnect();
-                in.close();
-            }
-            catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-            catch (IOException e){
-                e.printStackTrace();
-            }
-            finally
-            {
+                try {
+                    tripsJsonObject = new JSONObject(responseStrBuilder.toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
                 return tripsJsonObject;
+            } else {
+                //offline mode disabled
+                HttpURLConnection urlConnection;
+                InputStream in;
+
+                try {
+                    URL url = new URL("http://10.0.2.2:3000/getalltrips?email=" + email);
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                    in = new BufferedInputStream(urlConnection.getInputStream());
+                    BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+                    StringBuilder responseStrBuilder = new StringBuilder();
+                    String inputStr;
+                    while ((inputStr = streamReader.readLine()) != null)
+                        responseStrBuilder.append(inputStr);
+
+                    tripsJsonObject = new JSONObject(responseStrBuilder.toString());
+                    urlConnection.disconnect();
+                    in.close();
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    return tripsJsonObject;
+                }
             }
         }
 
@@ -576,20 +617,72 @@ public class MainActivity extends AppCompatActivity
 
             SubMenu sub = m.addSubMenu("Trips");
 
-            try
-            {
+            try {
                 JSONArray tripJSON = tripsJsonObject.getJSONArray("trips");
 
                 sub.add(R.id.trips_group, R.id.addTripID, Menu.FIRST, "Add a new trip").setCheckable(false).setIcon(R.drawable.ic_add_black_24dp);
 
-                for(int i = 0; i <tripJSON.length(); i++)
-                {
+                SQLiteDatabase db = mDBHelper.getWritableDatabase();
+
+                ContentValues tripDetails = new ContentValues();
+
+                for (int i = 0; i < tripJSON.length(); i++) {
                     JSONObject tripObj = tripJSON.getJSONObject(i);
                     sub.add(R.id.trips_group, tripObj.getInt("tripID"), Menu.FIRST + i, tripObj.getString("tripName")).setCheckable(true).setIcon(R.drawable.ic_place_black_24dp);
+
+                    if(!offlineMode) {
+                        String[] projection = {DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID};
+
+                        String selection = DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID + " = ?";
+                        String[] selectionArgs = {String.valueOf(tripObj.getInt("tripID"))};
+
+                        Cursor cursor = db.query(
+                                DatabaseHelper.TripEntry.TABLE_NAME,
+                                projection,
+                                selection,
+                                selectionArgs,
+                                null,
+                                null,
+                                null
+                        );
+
+                        long itemID = 0;
+
+                        while (cursor.moveToNext()) {
+                            itemID = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID));
+                        }
+                        cursor.close();
+
+                        if (itemID > 0) {
+                            tripDetails.put(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID, String.valueOf(tripObj.getInt("tripID")));
+                            tripDetails.put(DatabaseHelper.TripEntry.COLUMN_NAME_EMAIL, email);
+                            tripDetails.put(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME, tripObj.getString("tripName"));
+                            tripDetails.put(DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE, tripObj.getString("startDate"));
+
+                            // Which row to update, based on the title
+                            String tripUpdate = DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID + " LIKE ?";
+                            String[] tripUpdateArgs = {String.valueOf(tripObj.getInt("tripID"))};
+
+                            db.update(
+                                    DatabaseHelper.TripEntry.TABLE_NAME,
+                                    tripDetails,
+                                    tripUpdate,
+                                    tripUpdateArgs);
+                        } else {
+                            tripDetails.put(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID, String.valueOf(tripObj.getInt("tripID")));
+                            tripDetails.put(DatabaseHelper.TripEntry.COLUMN_NAME_EMAIL, email);
+                            tripDetails.put(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME, tripObj.getString("tripName"));
+                            tripDetails.put(DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE, tripObj.getString("startDate"));
+
+                            db.insert(DatabaseHelper.TripEntry.TABLE_NAME, null, tripDetails);
+                        }
+
+                        tripDetails.clear();
+                    }
                 }
-            }
-            catch(JSONException e)
-            {
+
+                mDBHelper.close();
+            } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
@@ -610,8 +703,8 @@ public class MainActivity extends AppCompatActivity
             InputStream in;
             String result = null;
 
-            try{
-                URL url = new URL("http://10.0.2.2:3000/gettripname?tripid="+ currentTrip );
+            try {
+                URL url = new URL("http://10.0.2.2:3000/gettripname?tripid=" + currentTrip);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
@@ -624,15 +717,11 @@ public class MainActivity extends AppCompatActivity
 
                 urlConnection.disconnect();
                 in.close();
-            }
-            catch (MalformedURLException e) {
+            } catch (MalformedURLException e) {
                 e.printStackTrace();
-            }
-            catch (IOException e){
+            } catch (IOException e) {
                 e.printStackTrace();
-            }
-            finally
-            {
+            } finally {
                 return result;
             }
         }
@@ -680,8 +769,8 @@ public class MainActivity extends AppCompatActivity
             HttpURLConnection urlConnection;
             InputStream in;
 
-            try{
-                URL url = new URL("http://10.0.2.2:3000/settripname?tripid="+ currentTrip + "&tripname=" + newName[0] );
+            try {
+                URL url = new URL("http://10.0.2.2:3000/settripname?tripid=" + currentTrip + "&tripname=" + newName[0]);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -689,27 +778,22 @@ public class MainActivity extends AppCompatActivity
 
                 urlConnection.disconnect();
                 in.close();
-            }
-            catch (MalformedURLException e) {
+            } catch (MalformedURLException e) {
                 e.printStackTrace();
-            }
-            catch (IOException e){
+            } catch (IOException e) {
                 e.printStackTrace();
-            }
-            finally
-            {
+            } finally {
                 return result;
             }
         }
 
         @Override
         protected void onPostExecute(Boolean result) {
-            if(result == true) {
+            if (result == true) {
                 Snackbar.make(findViewById(R.id.drawer_layout), "Trip updated", Snackbar.LENGTH_LONG).show();
                 MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
                 getAllTrips.execute(email);
-            } else
-            {
+            } else {
                 Snackbar.make(findViewById(R.id.drawer_layout), "Error updating trip", Snackbar.LENGTH_LONG).show();
             }
         }
@@ -726,32 +810,94 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected JSONObject doInBackground(Void... params) {
 
-            HttpURLConnection urlConnection;
-            InputStream in;
+            if(!offlineMode) {
+                //offline mode enabled
+                DatabaseHelper mDbHelper = new DatabaseHelper(context);
 
-            try{
-                URL url = new URL("http://10.0.2.2:3000/getallstops?tripid="+ tripIDForStops);
-                urlConnection = (HttpURLConnection) url.openConnection();
-                in = new BufferedInputStream(urlConnection.getInputStream());
-                BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+                SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+                // Define a projection that specifies which columns from the database
+                // you will actually use after this query.
+                String[] projection = {
+                        DatabaseHelper.StopEntry.COLUMN_NAME_STOPID,
+                        DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME,
+                        DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL,
+                        DatabaseHelper.StopEntry.COLUMN_NAME_DEPT,
+                        DatabaseHelper.StopEntry.COLUMN_NAME_STOPDESC,
+                        DatabaseHelper.StopEntry.COLUMN_NAME_LAT,
+                        DatabaseHelper.StopEntry.COLUMN_NAME_LONG
+                };
+
+                // Filter results WHERE "title" = 'My Title'
+                String selection = DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID + " = ?";
+                String[] selectionArgs = {String.valueOf(currentTrip)};
+
+
+                // How you want the results sorted in the resulting Cursor
+                String sortOrder =
+                        DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL + " DESC";
+
+                Cursor cursor = db.query(
+                        DatabaseHelper.StopEntry.TABLE_NAME,   // The table to query
+                        projection,             // The array of columns to return (pass null to get all)
+                        selection,              // The columns for the WHERE clause
+                        selectionArgs,          // The values for the WHERE clause
+                        null,                   // don't group the rows
+                        null,                   // don't filter by row groups
+                        sortOrder               // The sort order
+                );
+
+                stopsJsonObject = new JSONObject();
+
+                String stopJSON = "{\"stops\":[";
+
+                while(cursor.moveToNext()) {
+                    stopJSON = stopJSON + "{\"stopID\":" + cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPID)) + ", \"stopName\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME)) + "\",\"arrivalDate\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL)) + "\",\"deptDate\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_DEPT)) + "\",\"stopDesc\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPDESC)) + "\",\"lat\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_LAT)) + "\",\"long\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_LONG)) + "\"},";
+                }
+                cursor.close();
+
+                stopJSON = stopJSON.substring(0, stopJSON.length() - 1);
+
+                stopJSON = stopJSON + "]}";
+
+                Log.i(TAG, stopJSON);
+
                 StringBuilder responseStrBuilder = new StringBuilder();
-                String inputStr;
-                while ((inputStr = streamReader.readLine()) != null)
-                    responseStrBuilder.append(inputStr);
+                responseStrBuilder.append(stopJSON);
 
-                stopsJsonObject = new JSONObject(responseStrBuilder.toString());
-                urlConnection.disconnect();
-                in.close();
-            }
-            catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-            catch (IOException e){
-                e.printStackTrace();
-            }
-            finally
-            {
+                try {
+                    stopsJsonObject = new JSONObject(responseStrBuilder.toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
                 return stopsJsonObject;
+            }
+            else
+            {
+                HttpURLConnection urlConnection;
+                InputStream in;
+
+                try {
+                    URL url = new URL("http://10.0.2.2:3000/getallstops?tripid=" + tripIDForStops);
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                    in = new BufferedInputStream(urlConnection.getInputStream());
+                    BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+                    StringBuilder responseStrBuilder = new StringBuilder();
+                    String inputStr;
+                    while ((inputStr = streamReader.readLine()) != null)
+                        responseStrBuilder.append(inputStr);
+
+                    stopsJsonObject = new JSONObject(responseStrBuilder.toString());
+                    urlConnection.disconnect();
+                    in.close();
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    return stopsJsonObject;
+                }
             }
         }
 
@@ -764,7 +910,10 @@ public class MainActivity extends AppCompatActivity
 
             try {
                 final JSONArray stopsJSON = stopsJsonObject.getJSONArray("stops");
-                //tripArray = new String[stopsJSON.length()];
+
+                SQLiteDatabase db = mDBHelper.getWritableDatabase();
+
+                ContentValues stopDetails = new ContentValues();
 
                 for (int i = 0; i < stopsJSON.length(); i++) {
                     JSONObject stopsObj = stopsJSON.getJSONObject(i);
@@ -778,17 +927,74 @@ public class MainActivity extends AppCompatActivity
                     Marker markerObj;
 
                     LatLng marker = new LatLng(lat, lng);
-                    markerObj =  map.addMarker(new MarkerOptions().position(marker).title(stopName));
+                    markerObj = map.addMarker(new MarkerOptions().position(marker).title(stopName));
 
                     latlngs.add(new LatLng(lat, lng));
 
                     markerObj.setTag(stopID);
 
+                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(marker, 4));
 
-                    if(i == 0){
-                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(marker, 4));
+
+                    if(offlineMode) {
+                        String[] projection = {DatabaseHelper.StopEntry.COLUMN_NAME_STOPID};
+
+                        String selection = DatabaseHelper.StopEntry.COLUMN_NAME_STOPID + " = ?";
+                        String[] selectionArgs = {String.valueOf(stopsObj.getInt("stopID"))};
+
+                        Cursor cursor = db.query(
+                                DatabaseHelper.StopEntry.TABLE_NAME,
+                                projection,
+                                selection,
+                                selectionArgs,
+                                null,
+                                null,
+                                null
+                        );
+
+                        long itemID = 0;
+
+                        while (cursor.moveToNext()) {
+                            itemID = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPID));
+                        }
+                        cursor.close();
+
+                        if (itemID > 0) {
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPID, String.valueOf(stopsObj.getInt("stopID")));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID, stopsObj.getString("tripID"));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_EMAIL, email);
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME, stopsObj.getString("stopName"));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL, stopsObj.getString("arrivalDate"));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_DEPT, stopsObj.getString("deptDate"));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPDESC, stopsObj.getString("stopDesc"));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_LAT, stopsObj.getString("lat"));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_LONG, stopsObj.getString("long"));
+
+                            String stopUpdate = DatabaseHelper.StopEntry.COLUMN_NAME_STOPID + " LIKE ?";
+                            String[] stopUpdateArgs = {String.valueOf(stopsObj.getInt("stopID"))};
+
+                            db.update(
+                                    DatabaseHelper.StopEntry.TABLE_NAME,
+                                    stopDetails,
+                                    stopUpdate,
+                                    stopUpdateArgs);
+                        } else {
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPID, String.valueOf(stopsObj.getInt("stopID")));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID, stopsObj.getString("tripID"));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_EMAIL, email);
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME, stopsObj.getString("stopName"));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL, stopsObj.getString("arrivalDate"));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_DEPT, stopsObj.getString("deptDate"));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPDESC, stopsObj.getString("stopDesc"));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_LAT, stopsObj.getString("lat"));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_LONG, stopsObj.getString("long"));
+
+                            db.insert(DatabaseHelper.StopEntry.TABLE_NAME, null, stopDetails);
+                        }
                     }
                 }
+
+                mDBHelper.close();
 
                 map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
                     @Override
@@ -805,7 +1011,7 @@ public class MainActivity extends AppCompatActivity
 
                                 JSONObject stopObject = stopsJSON.getJSONObject(i);
 
-                                if(stopObject.getString("stopID") == ID) {
+                                if (stopObject.getString("stopID") == ID) {
 
                                     TextView stopName = findViewById(R.id.bottom_stop_name);
                                     TextView stopDesc = findViewById(R.id.bottom_stop_desc);
@@ -823,8 +1029,7 @@ public class MainActivity extends AppCompatActivity
                                     bottomSheetBehavior.setPeekHeight(100);
                                 }
                             }
-                        } catch (JSONException e)
-                        {
+                        } catch (JSONException e) {
                             e.printStackTrace();
                         }
                         return false;
@@ -835,7 +1040,7 @@ public class MainActivity extends AppCompatActivity
 
                 map.addPolyline(polylineOptions);
 
-            } catch(JSONException e){
+            } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
@@ -851,33 +1056,28 @@ public class MainActivity extends AppCompatActivity
             HttpURLConnection urlConnection = null;
             InputStream in = null;
 
-            try{
-                URL url = new URL("http://10.0.2.2:3000/addtrip?email="+email+"&tripname="+tripNameStr+"&startdate=2018-04-26 00:00:00");
+            try {
+                URL url = new URL("http://10.0.2.2:3000/addtrip?email=" + email + "&tripname=" + tripNameStr + "&startdate=2018-04-26 00:00:00");
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));
                 result = Boolean.valueOf(reader.readLine());
                 urlConnection.disconnect();
                 in.close();
-            }
-            catch (MalformedURLException e) {
+            } catch (MalformedURLException e) {
                 e.printStackTrace();
-            }
-            catch (IOException e){
+            } catch (IOException e) {
                 e.printStackTrace();
-            }
-            finally
-            {
+            } finally {
                 return result;
             }
         }
+
         protected void onPostExecute(Boolean result) {
-            if(result == true){
+            if (result == true) {
                 MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
                 getAllTrips.execute(email);
-            }
-            else
-            {
+            } else {
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 builder.setCancelable(true)
                         .setMessage("There was a problem. Please try again.")
@@ -892,7 +1092,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @SuppressLint("StaticFieldLeak")
-    private class AddNewStopToTrip extends AsyncTask<String, Void, Boolean>{
+    private class AddNewStopToTrip extends AsyncTask<String, Void, Boolean> {
 
         @Override
         protected void onPreExecute() {
@@ -904,23 +1104,19 @@ public class MainActivity extends AppCompatActivity
             HttpURLConnection urlConnection = null;
             InputStream in = null;
 
-            try{
-                URL url = new URL("http://10.0.2.2:3000/addstop?tripid="+ currentTrip + "&email=" + email + "&arrivaldate=" + stopDetails[1] +"&deptdate=" + stopDetails[2] + "&stopname=" + stopDetails[0] + "&stopdesc=" + stopDetails[3] + "&lat=" + stopDetails[4] + "&long=" + stopDetails[5]);
+            try {
+                URL url = new URL("http://10.0.2.2:3000/addstop?tripid=" + currentTrip + "&email=" + email + "&arrivaldate=" + stopDetails[1] + "&deptdate=" + stopDetails[2] + "&stopname=" + stopDetails[0] + "&stopdesc=" + stopDetails[3] + "&lat=" + stopDetails[4] + "&long=" + stopDetails[5]);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));
                 result = Boolean.valueOf(reader.readLine());
                 urlConnection.disconnect();
                 in.close();
-            }
-            catch (MalformedURLException e) {
+            } catch (MalformedURLException e) {
                 e.printStackTrace();
-            }
-            catch (IOException e){
+            } catch (IOException e) {
                 e.printStackTrace();
-            }
-            finally
-            {
+            } finally {
                 return result;
             }
         }
@@ -928,6 +1124,48 @@ public class MainActivity extends AppCompatActivity
         protected void onPostExecute(Boolean result) {
 
 
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    public class isConnectedToServer extends AsyncTask<Void, Void, Boolean> {
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            try{
+                URL myUrl = new URL("http://10.0.2.2:3000");
+                URLConnection connection = myUrl.openConnection();
+                connection.setConnectTimeout(5000);
+                connection.connect();
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            super.onPostExecute(result);
+            //DEBUGGING
+            offlineMode = false;
+            //offlineMode = result;
+
+            MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
+            getAllTrips.execute(email);
+
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+            Integer ID = preferences.getInt("Current Trip", 0);
+
+            //DEBUGGING
+            ID = 1;
+
+            if (ID > 0) {
+                currentTrip = ID;
+                tripIDForStops = String.valueOf(currentTrip);
+
+                MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
+                getAllStops.execute();
+            }
         }
     }
 }
