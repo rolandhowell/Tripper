@@ -36,4 +36,5 @@
     <string name="permission_rationale">Location permissions are required to find you current location</string>
     <string name="permission_denied_explanation">Permission denied. Unable to find your current location</string>
     <string name="settings">Settings</string>
+    <string name="select">Select</string>
 </resources>

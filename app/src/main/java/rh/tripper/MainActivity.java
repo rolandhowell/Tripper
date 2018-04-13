@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -35,14 +36,19 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -88,6 +94,7 @@ public class MainActivity extends AppCompatActivity
     BottomSheetBehavior bottomSheetBehavior = null;
     Integer currentTrip = null;
     Boolean result = false;
+    int currentStop;
 
     Calendar calendar = null;
     EditText stopArrivalDateBox = null;
@@ -100,6 +107,11 @@ public class MainActivity extends AppCompatActivity
     Boolean offlineMode = false;
     DatabaseHelper mDBHelper = null;
 
+    double addStopLat;
+    double addStopLong;
+    String addStopName;
+    ConstraintLayout autoLayout;
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -111,6 +123,117 @@ public class MainActivity extends AppCompatActivity
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
+                getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
+
+        autoLayout = findViewById(R.id.autocomplete_layout);
+
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(Place place) {
+                addStopName = (String) place.getName();
+                addStopLat = place.getLatLng().latitude;
+                addStopLong = place.getLatLng().longitude;
+
+                autoLayout.setVisibility(View.GONE);
+                final View addStopDialogView = View.inflate(context, R.layout.add_stop_dialog, null);
+
+                final EditText stopNameBox = addStopDialogView.findViewById(R.id.addStopName);
+                stopNameBox.setText(addStopName);
+                stopArrivalDateBox = addStopDialogView.findViewById(R.id.addStopStartDate);
+                stopDeptDateBox = addStopDialogView.findViewById(R.id.addStopEndDate);
+                final EditText stopDescBox = addStopDialogView.findViewById(R.id.addStopDesc);
+
+                calendar = Calendar.getInstance();
+
+                final DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                        calendar.set(Calendar.YEAR, year);
+                        calendar.set(Calendar.MONTH, monthOfYear);
+                        calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                        updateLabel();
+                    }
+                };
+
+                stopArrivalDateBox.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        dateSwitch = 1;
+                        new DatePickerDialog(MainActivity.this, date, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+                    }
+                });
+
+                stopDeptDateBox.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        dateSwitch = 2;
+                        new DatePickerDialog(MainActivity.this, date, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+                    }
+                });
+
+                final AlertDialog.Builder addStopDetailsDialog = new AlertDialog.Builder(context);
+                addStopDetailsDialog.setView(addStopDialogView)
+                        .setTitle("Add stop details")
+                        .setCancelable(false)
+                        .setNegativeButton("Add", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                boolean full = true;
+
+                                String stopName = stopNameBox.getText().toString();
+                                String stopArrivalDate = stopArrivalDateBox.getText().toString();
+                                String stopDeptDate = stopDeptDateBox.getText().toString();
+                                String stopDesc = stopDescBox.getText().toString();
+
+                                if (TextUtils.isEmpty(stopName)) {
+                                    stopNameBox.setError("Required");
+                                    full = false;
+                                }
+
+                                if (stopArrivalDate.length() == 0) {
+                                    stopArrivalDateBox.setError("Required");
+                                    full = false;
+                                }
+
+                                if (stopDeptDate.length() == 0) {
+                                    stopDeptDateBox.setError("Required");
+                                    full = false;
+                                }
+
+                                if (stopDesc.length() == 0) {
+                                    stopDescBox.setError("Required");
+                                    full = false;
+                                }
+
+                                if (full) {
+                                    String[] stopDetails = new String[6];
+                                    stopDetails[0] = stopName;
+                                    stopDetails[1] = stopArrivalDate;
+                                    stopDetails[2] = stopDeptDate;
+                                    stopDetails[3] = stopDesc;
+                                    stopDetails[4] = String.valueOf(addStopLat);
+                                    stopDetails[5] = String.valueOf(addStopLong);
+
+                                    AddNewStopToTrip addNewStopToTrip = new AddNewStopToTrip();
+                                    addNewStopToTrip.execute(stopDetails);
+
+                                    Log.i(TAG, stopName + ", " + stopArrivalDate + ", " + stopDeptDate + ", " + stopDesc + ", " + String.valueOf(mLastLocation.getLatitude()) + ", " + String.valueOf(mLastLocation.getLongitude()));
+                                }
+                            }
+                        })
+                        .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        }).show();
+                }
+
+            @Override
+            public void onError(Status status) {
+                Log.i(TAG, "An error occurred: " + status);
+            }
+        });
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
 
@@ -207,7 +330,7 @@ public class MainActivity extends AppCompatActivity
                                                         stopDetails[4] = String.valueOf(mLastLocation.getLatitude());
                                                         stopDetails[5] = String.valueOf(mLastLocation.getLongitude());
 
-                                                        MainActivity.AddNewStopToTrip addNewStopToTrip = new MainActivity.AddNewStopToTrip();
+                                                        AddNewStopToTrip addNewStopToTrip = new AddNewStopToTrip();
                                                         addNewStopToTrip.execute(stopDetails);
 
                                                         Log.i(TAG, stopName + ", " + stopArrivalDate + ", " + stopDeptDate + ", " + stopDesc + ", " + String.valueOf(mLastLocation.getLatitude()) + ", " + String.valueOf(mLastLocation.getLongitude()));
@@ -226,7 +349,7 @@ public class MainActivity extends AppCompatActivity
                         })
                         .setNegativeButton("Search", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
-                                dialog.cancel();
+                                autoLayout.setVisibility(View.VISIBLE);
                             }
                         }).show();
             }
@@ -279,6 +402,9 @@ public class MainActivity extends AppCompatActivity
         } else {
             getLastLocation();
         }
+
+        MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
+        getAllTrips.execute();
     }
 
     private void updateLabel() {
@@ -323,21 +449,21 @@ public class MainActivity extends AppCompatActivity
     }
 
     private boolean checkPermissions() {
-        int permissionState = ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION);
+        int permissionState = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+
         return permissionState == PackageManager.PERMISSION_GRANTED;
     }
 
     private void startLocationPermissionRequest() {
         ActivityCompat.requestPermissions(MainActivity.this,
-                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                 REQUEST_PERMISSIONS_REQUEST_CODE);
     }
 
     private void requestPermissions() {
         boolean shouldProvideRationale =
                 ActivityCompat.shouldShowRequestPermissionRationale(this,
-                        Manifest.permission.ACCESS_COARSE_LOCATION);
+                        Manifest.permission.ACCESS_FINE_LOCATION);
 
         // Provide an additional rationale to the user. This would happen if the user denied the
         // request previously, but didn't check the "Don't ask again" checkbox.
@@ -520,7 +646,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected JSONObject doInBackground(String... emailIn) {
 
-            if(!offlineMode) {
+            /*if(!offlineMode) {
                 //offline mode enabled
 
                 DatabaseHelper mDbHelper = new DatabaseHelper(context);
@@ -572,7 +698,7 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 return tripsJsonObject;
-            } else {
+            } else {*/
                 //offline mode disabled
                 HttpURLConnection urlConnection;
                 InputStream in;
@@ -597,7 +723,7 @@ public class MainActivity extends AppCompatActivity
                 } finally {
                     return tripsJsonObject;
                 }
-            }
+            //}
         }
 
         @Override
@@ -810,7 +936,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected JSONObject doInBackground(Void... params) {
 
-            if(!offlineMode) {
+            /*if(!offlineMode) {
                 //offline mode enabled
                 DatabaseHelper mDbHelper = new DatabaseHelper(context);
 
@@ -874,7 +1000,7 @@ public class MainActivity extends AppCompatActivity
                 return stopsJsonObject;
             }
             else
-            {
+            {*/
                 HttpURLConnection urlConnection;
                 InputStream in;
 
@@ -898,7 +1024,7 @@ public class MainActivity extends AppCompatActivity
                 } finally {
                     return stopsJsonObject;
                 }
-            }
+            //}
         }
 
         @Override
@@ -936,7 +1062,7 @@ public class MainActivity extends AppCompatActivity
                     map.moveCamera(CameraUpdateFactory.newLatLngZoom(marker, 4));
 
 
-                    if(offlineMode) {
+                    /*if(offlineMode) {
                         String[] projection = {DatabaseHelper.StopEntry.COLUMN_NAME_STOPID};
 
                         String selection = DatabaseHelper.StopEntry.COLUMN_NAME_STOPID + " = ?";
@@ -991,7 +1117,7 @@ public class MainActivity extends AppCompatActivity
 
                             db.insert(DatabaseHelper.StopEntry.TABLE_NAME, null, stopDetails);
                         }
-                    }
+                    }*/
                 }
 
                 mDBHelper.close();
@@ -1027,6 +1153,18 @@ public class MainActivity extends AppCompatActivity
                                     map.moveCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
 
                                     bottomSheetBehavior.setPeekHeight(100);
+
+                                    currentStop = IDint;
+
+                                    Button stopDelButton = findViewById(R.id.stopDelButton);
+
+                                    stopDelButton.setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View v) {
+                                            MainActivity.DeleteStop deleteStop = new MainActivity.DeleteStop();
+                                            deleteStop.execute();
+                                        }
+                                    });
                                 }
                             }
                         } catch (JSONException e) {
@@ -1124,6 +1262,98 @@ public class MainActivity extends AppCompatActivity
         protected void onPostExecute(Boolean result) {
 
 
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class DeleteTrip extends AsyncTask<String, Void, Boolean> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Boolean doInBackground(String... emailIn) {
+
+            HttpURLConnection urlConnection;
+            InputStream in;
+
+            try {
+                URL url = new URL("http://10.0.2.2:3000/deltrip?tripid=" + currentTrip);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                in = new BufferedInputStream(urlConnection.getInputStream());
+                urlConnection.disconnect();
+                in.close();
+                return true;
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+                return false;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            } finally {
+
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if(result)
+            {
+                MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
+                getAllTrips.execute(email);
+                showSnackbar("Your trip was deleted.");
+            }
+            else {
+                showSnackbar("There was a problem, please try again.");
+            }
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class DeleteStop extends AsyncTask<String, Void, Boolean> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Boolean doInBackground(String... emailIn) {
+
+            HttpURLConnection urlConnection;
+            InputStream in;
+
+            try {
+                URL url = new URL("http://10.0.2.2:3000/delstop?stopid=" + currentStop);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                in = new BufferedInputStream(urlConnection.getInputStream());
+                urlConnection.disconnect();
+                in.close();
+                return true;
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+                return false;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            } finally {
+
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if(result)
+            {
+                MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
+                getAllStops.execute();
+                showSnackbar("Your stop was deleted.");
+            }
+            else {
+                showSnackbar("There was a problem, please try again.");
+            }
         }
     }
 

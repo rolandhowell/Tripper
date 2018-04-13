@@ -37,4 +37,18 @@
         app:headerLayout="@layout/nav_header"
         app:menu="@menu/drawer_view" />
 
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/autocomplete_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/bgLight"
+        android:visibility="gone">
+        <fragment
+            android:id="@+id/place_autocomplete_fragment"
+            android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </android.support.constraint.ConstraintLayout>
+
+
 </android.support.v4.widget.DrawerLayout>
