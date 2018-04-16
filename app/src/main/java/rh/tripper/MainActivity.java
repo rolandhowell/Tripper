@@ -434,6 +434,10 @@ public class MainActivity extends AppCompatActivity
                 });
     }
 
+    private void showToast(final String text) {
+        Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+    }
+
     private void showSnackbar(final String text) {
         View container = findViewById(R.id.drawer_layout);
         if (container != null) {
@@ -559,8 +563,24 @@ public class MainActivity extends AppCompatActivity
                 MainActivity.GetTripName getTripName = new MainActivity.GetTripName();
                 getTripName.execute();
                 break;
-            case R.id.action_test:
-                Toast.makeText(context, "Testing", Toast.LENGTH_LONG).show();
+            case R.id.del_trip:
+                final AlertDialog.Builder deleteTripDialog = new AlertDialog.Builder(context);
+                deleteTripDialog.setTitle("Delete Trip")
+                        .setMessage("Are you sure you want to delete this trip and all it's stops?")
+                        .setCancelable(true)
+                        .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        })
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                MainActivity.DeleteTrip deleteTrip = new MainActivity.DeleteTrip();
+                                deleteTrip.execute();
+                                dialog.cancel();
+                            }
+                        }).show();
+
                 break;
         }
 
@@ -573,12 +593,24 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
 
         if (item.getItemId() == R.id.profile) {
-            // Handle the camera action
-            Toast.makeText(context, String.valueOf(item.getItemId()), Toast.LENGTH_LONG).show();
+            Intent i = new Intent(context, UpdateProfileActivity.class);
+            startActivity(i);
         } else if (item.getItemId() == R.id.settings) {
             Toast.makeText(context, String.valueOf(item.getItemId()), Toast.LENGTH_LONG).show();
         } else if (item.getItemId() == R.id.logout) {
-            Toast.makeText(context, String.valueOf(item.getItemId()), Toast.LENGTH_LONG).show();
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            builder.setTitle("Are you sure?")
+                    .setCancelable(true)
+                    .setPositiveButton("Log out", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            logout();
+                        }
+                    })
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                        }
+                    }).show();
         } else if (item.getItemId() == R.id.addTripID) {
 
             final View addTripView = View.inflate(context, R.layout.add_trip_dialog, null);
@@ -1265,50 +1297,13 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @SuppressLint("StaticFieldLeak")
-    private class DeleteTrip extends AsyncTask<String, Void, Boolean> {
+    public void logout() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        preferences.edit().remove("Current Trip").apply();
+        preferences.edit().remove("User").apply();
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected Boolean doInBackground(String... emailIn) {
-
-            HttpURLConnection urlConnection;
-            InputStream in;
-
-            try {
-                URL url = new URL("http://10.0.2.2:3000/deltrip?tripid=" + currentTrip);
-                urlConnection = (HttpURLConnection) url.openConnection();
-                in = new BufferedInputStream(urlConnection.getInputStream());
-                urlConnection.disconnect();
-                in.close();
-                return true;
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                return false;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            } finally {
-
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Boolean result) {
-            if(result)
-            {
-                MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
-                getAllTrips.execute(email);
-                showSnackbar("Your trip was deleted.");
-            }
-            else {
-                showSnackbar("There was a problem, please try again.");
-            }
-        }
+        Intent i = new Intent(context, LandingActivity.class);
+        startActivity(i);
     }
 
     @SuppressLint("StaticFieldLeak")
@@ -1358,6 +1353,52 @@ public class MainActivity extends AppCompatActivity
     }
 
     @SuppressLint("StaticFieldLeak")
+    private class DeleteTrip extends AsyncTask<Void, Void, Boolean> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+
+            HttpURLConnection urlConnection;
+            InputStream in;
+
+            try {
+                URL url = new URL("http://10.0.2.2:3000/deltrip?tripid=" + currentTrip);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                in = new BufferedInputStream(urlConnection.getInputStream());
+                urlConnection.disconnect();
+                in.close();
+                return true;
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+                return false;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            } finally {
+
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if(result)
+            {
+                MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
+                getAllTrips.execute(email);
+                showSnackbar("Your trip was deleted.");
+            }
+            else {
+                showSnackbar("There was a problem, please try again.");
+            }
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
     public class isConnectedToServer extends AsyncTask<Void, Void, Boolean> {
 
         @Override
@@ -1377,8 +1418,8 @@ public class MainActivity extends AppCompatActivity
         protected void onPostExecute(Boolean result) {
             super.onPostExecute(result);
             //DEBUGGING
-            offlineMode = false;
-            //offlineMode = result;
+            //offlineMode = false;
+            offlineMode = result;
 
             MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
             getAllTrips.execute(email);

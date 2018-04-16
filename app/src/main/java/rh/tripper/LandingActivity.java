@@ -4,8 +4,10 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -37,47 +39,56 @@ public class LandingActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         context = this;
-        setContentView(R.layout.activity_landing);
 
-        loginButton = findViewById(R.id.loginButton);
-        regButton = findViewById(R.id.registerButton);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String user = preferences.getString("User", null);
 
-        loginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                emailBox = findViewById(R.id.emailBox);
-                passwordBox = findViewById(R.id.passwordBox);
+        if (user != null) {
+            Intent i = new Intent(context, MainActivity.class);
+            i.putExtra("email", user);
+            startActivityForResult(i, 1);
+        } else {
+            setContentView(R.layout.activity_landing);
 
-                email = emailBox.getText().toString();
-                password = passwordBox.getText().toString();
+            loginButton = findViewById(R.id.loginButton);
+            regButton = findViewById(R.id.registerButton);
 
-                if(email.length() == 0){
-                    emailBox.setError("Email is required.");
-                    count++;
+            loginButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    emailBox = findViewById(R.id.emailBox);
+                    passwordBox = findViewById(R.id.passwordBox);
+
+                    email = emailBox.getText().toString();
+                    password = passwordBox.getText().toString();
+
+                    if (email.length() == 0) {
+                        emailBox.setError("Email is required.");
+                        count++;
+                    }
+
+                    if (password.length() == 0) {
+                        passwordBox.setError("Password is required.");
+                        count++;
+                    }
+
+                    if (count == 0) {
+                        viewVar = view;
+                        LogUserIn logIn = new LogUserIn();
+                        logIn.execute(password);
+                    }
+
                 }
+            });
 
-                if(password.length() == 0){
-                    passwordBox.setError("Password is required.");
-                    count++;
+            regButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent i = new Intent(context, RegisterActivity.class);
+                    startActivityForResult(i, 1);
                 }
-
-                if(count == 0)
-                {
-                    viewVar = view;
-                    LogUserIn logIn = new LogUserIn();
-                    logIn.execute(password);
-                }
-
-            }
-        });
-
-        regButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent i = new Intent(context, RegisterActivity.class);
-                startActivityForResult(i, 1);
-            }
-        });
+            });
+        }
 
     }
 
@@ -121,6 +132,11 @@ public class LandingActivity extends AppCompatActivity {
 
             if (result == true)
             {
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putString("User", email);
+                editor.apply();
+
                 Intent i = new Intent(viewVar.getContext(), MainActivity.class);
                 i.putExtra("email", email);
                 startActivityForResult(i, 1);

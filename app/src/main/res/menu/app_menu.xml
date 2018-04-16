@@ -8,9 +8,9 @@
         android:title="@string/action_edit_trip"
         app:showAsAction="ifRoom"/>
     <item
-        android:id="@+id/action_test"
-        android:icon="@drawable/ic_account_circle_black_24dp"
-        android:title="Test"
-        app:showAsAction="ifRoom"/>
+        android:id="@+id/del_trip"
+        android:icon="@drawable/ic_delete_black_18dp"
+        android:title="@string/delete_trip"
+        app:showAsAction="never" />
 
 </menu>
