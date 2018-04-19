@@ -32,6 +32,7 @@
         android:layout_margin="10dp"
         android:clickable="true"
         app:srcCompat="@drawable/ic_add_white_24dp"
-        android:tooltipText="@string/addStopButton"/>
+        android:focusable="true"
+        android:tooltipText="@string/addStopButton" />
 
 </android.support.design.widget.CoordinatorLayout>
