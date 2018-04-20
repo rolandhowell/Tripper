@@ -12,8 +12,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -39,7 +37,6 @@ public class RegisterActivity extends AppCompatActivity {
     Button regButton = null;
     Context context = null;
     View viewVar = null;
-    RelativeLayout progress = null;
 
     int count = 0;
 
@@ -137,8 +134,6 @@ public class RegisterActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            progress = findViewById(R.id.progressBarRegister);
-            progress.setVisibility(View.VISIBLE);
         }
 
         @Override
@@ -170,7 +165,6 @@ public class RegisterActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Boolean resultB) {
-            progress.setVisibility(View.INVISIBLE);
 
             if (result == true)
             {

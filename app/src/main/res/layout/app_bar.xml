@@ -16,6 +16,8 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
+            android:elevation="4dp"
+            android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
             app:popupTheme="@style/AppTheme.PopupOverlay" />
 
     </android.support.design.widget.AppBarLayout>
@@ -29,6 +31,8 @@
         android:layout_gravity="bottom|right"
         android:layout_margin="10dp"
         android:clickable="true"
-        app:srcCompat="@drawable/ic_add_white_24dp" />
+        app:srcCompat="@drawable/ic_add_white_24dp"
+        android:focusable="true"
+        android:tooltipText="@string/addStopButton" />
 
 </android.support.design.widget.CoordinatorLayout>

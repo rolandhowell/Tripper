@@ -1,5 +1,4 @@
 <resources>
-    //Log In Activity
     <string name="app_name">Tripper</string>
     <string name="tripperLogo">Tripper Logo</string>
     <string name="tagline">Your Adventure Companion</string>
@@ -10,16 +9,41 @@
     <string name="regButton">Register</string>
     <string name="title_activity_main">MainActivity</string>
 
-    //Reg Activity
-    <string name="joinTripper">Register and start using Tripper:</string>
-    <string name="regName">Name</string>
-    <string name="TandCs">Tick to accept our T and Cs</string>
-    <string name="city">City (Optional)</string>
-    <string name="country">Country (Optional)</string>
-    <string name="dob">Date of Birth (Optional)</string>
+    <string name="joinTripper">Register and start using tripper:</string>
+    <string name="regName">name</string>
+    <string name="TandCs">Tick to accept out T and Cs</string>
+    <string name="city">city (optional)</string>
+    <string name="country">country (optional)</string>
+    <string name="dob">date of birth (Optional)</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="addStopButton">Add a stop</string>
+    <string name="arrivalLabelStart">Arrival:</string>
+    <string name="deptLabelStart">Left:</string>
+    <string name="add_a_stop">Add a stop</string>
+    <string name="stop_name">Stop Name</string>
+    <string name="arrival_date">Arrival Date</string>
+    <string name="departure_date">Departure Date</string>
+    <string name="stop_description">Stop Description</string>
+    <string name="find_on_map">Find on map</string>
+    <string name="search">Search</string>
+    <string name="add_a_trip">Add a trip</string>
+    <string name="trip_name">Trip name</string>
+    <string name="action_edit_trip">Edit Trip</string>
+    <string name="edit_a_trip">Edit your trip</string>
+    <string name="no_location_detected">No Location Detected</string>
+    <string name="permission_rationale">Location permissions are required to find you current location</string>
+    <string name="permission_denied_explanation">Permission denied. Unable to find your current location</string>
+    <string name="settings">Settings</string>
+    <string name="select">Select</string>
+    <string name="delete_trip">Delete Trip</string>
+    <string name="update_profile">Update your profile</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="update">Update</string>
+    <string name="change_password">Change password</string>
+    <string name="current_password">Current password</string>
+    <string name="new_password">New password</string>
+    <string name="change_location">Change Location</string>
 </resources>

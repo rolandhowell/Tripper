@@ -2,35 +2,36 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="rh.tripper.RegisterActivity"
-    android:background="@color/bg">
+    android:background="@color/bg"
+    tools:context="rh.tripper.UpdateProfileActivity">
 
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="20dp"
+        android:layout_margin="10dp"
         android:background="@color/bgLight"
-        android:padding="10dp"
-        android:elevation="500sp">
+        android:elevation="500sp"
+        android:padding="5dp">
 
         <TextView
-            android:id="@+id/joinUpText"
+            android:id="@+id/updateProfileText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
-            android:text="@string/joinTripper"
-            android:textAlignment="center"
+            android:text="@string/update_profile"
             android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <EditText
-            android:id="@+id/nameBoxNew"
+            android:id="@+id/updateNameBox"
+            style="@style/normal_edittext"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
@@ -40,38 +41,11 @@
             android:inputType="textPersonName"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/joinUpText"
-            style="@style/normal_edittext"/>
+            app:layout_constraintTop_toBottomOf="@+id/updateProfileText" />
 
         <EditText
-            android:id="@+id/emailBoxNew"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:hint="@string/emailHint"
-            android:inputType="textEmailAddress"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/nameBoxNew"
-            style="@style/normal_edittext"/>
-
-        <EditText
-            android:id="@+id/passwordBoxNew"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            android:hint="@string/passwordHint"
-            android:inputType="textPassword"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/emailBoxNew"
-            style="@style/normal_edittext"/>
-
-        <EditText
-            android:id="@+id/cityBoxNew"
+            android:id="@+id/updateCityBox"
+            style="@style/normal_edittext"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
@@ -80,11 +54,11 @@
             android:inputType="text"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/passwordBoxNew"
-            style="@style/normal_edittext"/>
+            app:layout_constraintTop_toBottomOf="@+id/updateNameBox" />
 
         <EditText
-            android:id="@+id/countryBoxNew"
+            android:id="@+id/updateCountryBox"
+            style="@style/normal_edittext"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
@@ -94,11 +68,11 @@
             android:inputType="text"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/cityBoxNew"
-            style="@style/normal_edittext"/>
+            app:layout_constraintTop_toBottomOf="@+id/updateCityBox" />
 
         <EditText
-            android:id="@+id/dobBox"
+            android:id="@+id/updateDobBox"
+            style="@style/normal_edittext"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
@@ -109,37 +83,50 @@
             android:hint="@string/dob"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/countryBoxNew"
-            style="@style/normal_edittext"/>
-
-        <CheckBox
-            android:id="@+id/checkBox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            android:text="@string/TandCs"
-            android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/dobBox" />
+            app:layout_constraintTop_toBottomOf="@+id/updateCountryBox" />
 
         <Button
-            android:id="@+id/registerButtonNew"
-            style="@style/Widget.AppCompat.Button.Colored"
+            android:id="@+id/updatePasswordButton"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:text="@string/change_password"
+            android:textColor="@color/primaryDarkColor"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/updateDobBox" />
+
+        <Button
+            android:id="@+id/updateProfileDeleteButton"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="88dp"
+            android:layout_height="wrap_content"
+            android:text="@string/delete"
+            android:textColor="@color/red"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <Button
+            android:id="@+id/updateProfileCancelButton"
+            style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            android:background="@color/primaryColor"
-            android:text="@string/regButton"
-            android:textAllCaps="false"
-            android:textSize="18sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/checkBox" />
+            android:text="@string/cancel"
+            android:textColor="@color/primaryDarkColor"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/updateProfileButton" />
+
+        <Button
+            android:id="@+id/updateProfileButton"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/update"
+            android:textColor="@color/primaryDarkColor"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
     </android.support.constraint.ConstraintLayout>
 
