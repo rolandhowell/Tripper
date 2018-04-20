@@ -19,7 +19,6 @@
             android:id="@+id/bottom_stop_name"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:background="@color/primaryColor"
             android:padding="10dp"
             android:textColor="@color/primaryTextColor"
             android:textSize="20sp"
@@ -30,7 +29,6 @@
             android:id="@+id/bottom_stop_name_edit"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:background="@color/primaryColor"
             android:inputType="text"
             android:padding="10dp"
             android:textSize="20sp"
@@ -79,8 +77,7 @@
         android:id="@+id/stopDetailsLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="2">
+        android:elevation="200sp">
 
         <TextView
             android:id="@+id/bottom_arrival_date"

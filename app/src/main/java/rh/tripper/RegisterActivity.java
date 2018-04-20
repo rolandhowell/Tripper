@@ -27,6 +27,8 @@ import java.util.Locale;
 
 public class RegisterActivity extends AppCompatActivity {
 
+    String urlString = "http://ec2-18-221-155-124.us-east-2.compute.amazonaws.com:3000/";
+
     Calendar dobCalendar = null;
     EditText dobBox = null;
     EditText nameBox = null;
@@ -143,7 +145,7 @@ public class RegisterActivity extends AppCompatActivity {
             InputStream in = null;
 
             try{
-                URL url = new URL("http://10.0.2.2:3000/reguser?email="+ email + "&password=" + password + "&name=" + name+ "&city=" + city+ "&country=" + country+ "&dob=" + dob);
+                URL url = new URL(urlString + "reguser?email=" + email + "&password=" + password + "&name=" + name + "&city=" + city + "&country=" + country + "&dob=" + dob);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));

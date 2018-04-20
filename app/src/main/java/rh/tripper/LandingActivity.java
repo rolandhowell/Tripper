@@ -24,6 +24,8 @@ import java.net.URL;
 
 public class LandingActivity extends AppCompatActivity {
 
+    String urlString = "http://ec2-18-221-155-124.us-east-2.compute.amazonaws.com:3000/";
+
     Button loginButton = null;
     Button regButton = null;
     EditText emailBox = null;
@@ -107,7 +109,7 @@ public class LandingActivity extends AppCompatActivity {
             InputStream in = null;
 
             try{
-                URL url = new URL("http://10.0.2.2:3000/login?email="+ email + "&password=" + password);
+                URL url = new URL(urlString + "login?email=" + email + "&password=" + password);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));

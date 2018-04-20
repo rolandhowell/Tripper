@@ -89,6 +89,9 @@ import static android.view.Gravity.END;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
 
+    String urlString = "http://ec2-18-221-155-124.us-east-2.compute.amazonaws.com:3000";
+    //String urlString = "http://10.0.2.2:3000/";
+
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
     protected Location mLastLocation;
@@ -257,7 +260,7 @@ public class MainActivity extends AppCompatActivity
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
 
-        MainActivity.isConnectedToServer isConnectedToServer = new  MainActivity.isConnectedToServer();
+        MainActivity.isConnectedToServer isConnectedToServer = new MainActivity.isConnectedToServer();
         isConnectedToServer.execute();
 
         mDBHelper = new DatabaseHelper(this);
@@ -387,9 +390,6 @@ public class MainActivity extends AppCompatActivity
         if (extras != null) {
             email = extras.getString("email");
         }
-
-        // DEBUGGING
-        email = "test@test.com";
 
         llBottomSheet = findViewById(R.id.bottom_sheet);
 
@@ -788,7 +788,7 @@ public class MainActivity extends AppCompatActivity
             InputStream in;
 
             try {
-                URL url = new URL("http://10.0.2.2:3000/getalltrips?email=" + email);
+                URL url = new URL(urlString + "/getalltrips?email=" + email);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
@@ -800,12 +800,14 @@ public class MainActivity extends AppCompatActivity
                 tripsJsonObject = new JSONObject(responseStrBuilder.toString());
                 urlConnection.disconnect();
                 in.close();
+                return tripsJsonObject;
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
                 e.printStackTrace();
             } finally {
                 return tripsJsonObject;
             }
-            //}
         }
 
         @Override
@@ -838,7 +840,7 @@ public class MainActivity extends AppCompatActivity
                     JSONObject tripObj = tripJSON.getJSONObject(i);
                     sub.add(R.id.trips_group, tripObj.getInt("tripID"), Menu.FIRST + i, tripObj.getString("tripName")).setCheckable(true).setIcon(R.drawable.ic_place_black_24dp);
 
-                    if(!offlineMode) {
+                    if (!offlineMode) {
                         String[] projection = {DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID};
 
                         String selection = DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID + " = ?";
@@ -911,7 +913,7 @@ public class MainActivity extends AppCompatActivity
             String result = null;
 
             try {
-                URL url = new URL("http://10.0.2.2:3000/gettripname?tripid=" + currentTrip);
+                URL url = new URL(urlString + "/gettripname?tripid=" + currentTrip);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
@@ -1114,7 +1116,7 @@ public class MainActivity extends AppCompatActivity
             InputStream in;
 
             try {
-                URL url = new URL("http://10.0.2.2:3000/settripname?tripid=" + currentTrip + "&tripname=" + newName[0]);
+                URL url = new URL(urlString + "/settripname?tripid=" + currentTrip + "&tripname=" + newName[0]);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -1152,7 +1154,7 @@ public class MainActivity extends AppCompatActivity
             InputStream in;
 
             try {
-                URL url = new URL("http://10.0.2.2:3000/addtrip?email=" + email + "&tripname=" + tripNameStr + "&startdate=2018-04-26 00:00:00");
+                URL url = new URL(urlString + "/addtrip?email=" + email + "&tripname=" + tripNameStr + "&startdate=2018-04-26 00:00:00");
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -1200,7 +1202,7 @@ public class MainActivity extends AppCompatActivity
             InputStream in = null;
 
             try {
-                URL url = new URL("http://10.0.2.2:3000/addstop?tripid=" + currentTrip + "&email=" + email + "&arrivaldate=" + stopDetails[1] + "&deptdate=" + stopDetails[2] + "&stopname=" + stopDetails[0] + "&stopdesc=" + stopDetails[3] + "&lat=" + stopDetails[4] + "&long=" + stopDetails[5]);
+                URL url = new URL(urlString + "/addstop?tripid=" + currentTrip + "&email=" + email + "&arrivaldate=" + stopDetails[1] + "&deptdate=" + stopDetails[2] + "&stopname=" + stopDetails[0] + "&stopdesc=" + stopDetails[3] + "&lat=" + stopDetails[4] + "&long=" + stopDetails[5]);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -1237,7 +1239,7 @@ public class MainActivity extends AppCompatActivity
             InputStream in;
 
             try {
-                URL url = new URL("http://10.0.2.2:3000/delstop?stopid=" + currentStop);
+                URL url = new URL(urlString + "/delstop?stopid=" + currentStop);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 urlConnection.disconnect();
@@ -1346,7 +1348,7 @@ public class MainActivity extends AppCompatActivity
             InputStream in;
 
             try {
-                URL url = new URL("http://10.0.2.2:3000/getallstops?tripid=" + tripIDForStops);
+                URL url = new URL(urlString + "/getallstops?tripid=" + tripIDForStops);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
@@ -1576,7 +1578,7 @@ public class MainActivity extends AppCompatActivity
             InputStream in;
 
             try {
-                URL url = new URL("http://10.0.2.2:3000/updatestopdetails?stopid=" + currentStop + "&arrdate=" + details[0] + "&deptdate=" + details[1] + "&name=" + details[2] + "&desc=" + details[3]);
+                URL url = new URL(urlString + "/updatestopdetails?stopid=" + currentStop + "&arrdate=" + details[0] + "&deptdate=" + details[1] + "&name=" + details[2] + "&desc=" + details[3]);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 urlConnection.disconnect();
@@ -1593,7 +1595,7 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected void onPostExecute(Boolean result) {
-            if(result) {
+            if (result) {
                 MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
                 getAllStops.execute();
                 showSnackbar("Stop updated.");
@@ -1618,7 +1620,7 @@ public class MainActivity extends AppCompatActivity
             InputStream in;
 
             try {
-                URL url = new URL("http://10.0.2.2:3000/deltrip?tripid=" + currentTrip);
+                URL url = new URL(urlString + "/deltrip?tripid=" + currentTrip);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 urlConnection.disconnect();
@@ -1637,7 +1639,7 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected void onPostExecute(Boolean result) {
-            if(result) {
+            if (result) {
                 MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
                 getAllTrips.execute(email);
                 showSnackbar("Your trip was deleted.");
@@ -1652,8 +1654,8 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected Boolean doInBackground(Void... voids) {
-            try{
-                URL myUrl = new URL("http://10.0.2.2:3000");
+            try {
+                URL myUrl = new URL(urlString + "");
                 URLConnection connection = myUrl.openConnection();
                 connection.setConnectTimeout(5000);
                 connection.connect();
@@ -1666,8 +1668,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected void onPostExecute(Boolean result) {
             super.onPostExecute(result);
-            //DEBUGGING
-            //offlineMode = false;
+
             offlineMode = result;
 
             MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
@@ -1704,7 +1705,7 @@ public class MainActivity extends AppCompatActivity
                 URL url;
 
                 if (byCurrLoc) {
-                    url = new URL("http://10.0.2.2:3000/updatestoplocation?stopid=" + currentStop + "&lat=" + String.valueOf(mLastLocation.getLatitude()) + "&long=" + String.valueOf(mLastLocation.getLongitude()));
+                    url = new URL(urlString + "/updatestoplocation?stopid=" + currentStop + "&lat=" + String.valueOf(mLastLocation.getLatitude()) + "&long=" + String.valueOf(mLastLocation.getLongitude()));
                 } else {
                     url = new URL("http://10.0.2.2:3000/updatestoplocation?stopid=" + currentStop + "&lat=" + String.valueOf(addStopLat) + "&long=" + String.valueOf(addStopLong));
                 }
