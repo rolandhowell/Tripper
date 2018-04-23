@@ -100,6 +100,8 @@ public class LandingActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            loginButton.setEnabled(false);
+            regButton.setEnabled(false);
         }
 
         @Override
@@ -157,6 +159,9 @@ public class LandingActivity extends AppCompatActivity {
 
                 AlertDialog logInAlert = alertBuilder.create();
                 logInAlert.show();
+
+                loginButton.setEnabled(true);
+                regButton.setEnabled(true);
             }
         }
     }
