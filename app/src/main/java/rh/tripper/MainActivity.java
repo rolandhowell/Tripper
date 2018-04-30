@@ -1,11 +1,8 @@
 package rh.tripper;
 
 import android.Manifest;
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -132,25 +129,11 @@ public class MainActivity extends AppCompatActivity
     Boolean updatingStop = false;
     Boolean byCurrLoc = false;
 
-    public static final String AUTHORITY = "rh.tripper.provider";
-    public static final String ACCOUNT_TYPE = "rh.tripper";
-    public static final String ACCOUNT = "mainaccount";
-    public static final long SECOND_PER_MIN = 60L;
-    public static final long SYNC_INTERVAL_IN_MINS = 5L;
-    public static final long SYNC_INTERVAL = SECOND_PER_MIN * SYNC_INTERVAL_IN_MINS;
-    Account mAccount;
-    ContentResolver resolver;
-
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = this;
-
-        mAccount = CreateSyncAccount(this);
-        resolver = getContentResolver();
-
-        ContentResolver.addPeriodicSync(mAccount, AUTHORITY, Bundle.EMPTY, SYNC_INTERVAL);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -484,14 +467,6 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-    private Account CreateSyncAccount(MainActivity mainActivity) {
-        Account newAccount = new Account(ACCOUNT, ACCOUNT_TYPE);
-        AccountManager accountManager = (AccountManager) context.getSystemService(ACCOUNT_SERVICE);
-
-        accountManager.addAccountExplicitly(newAccount, null, null);
-        return newAccount;
-    }
-
     @Override
     public void onStart() {
         super.onStart();
@@ -631,8 +606,6 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
-
         switch (item.getItemId()) {
             case android.R.id.home:
                 mDrawerLayout.openDrawer(GravityCompat.START);
@@ -658,6 +631,9 @@ public class MainActivity extends AppCompatActivity
                                 dialog.cancel();
                             }
                         }).show();
+
+                break;
+            case R.id.action_refresh:
 
                 break;
         }

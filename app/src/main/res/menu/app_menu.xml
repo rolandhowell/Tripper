@@ -3,10 +3,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_refresh"
+        android:icon="@drawable/ic_loop_white_24dp"
+        android:title="Sync Data"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/action_edit"
         android:icon="@drawable/ic_mode_edit_white_24dp"
         android:title="@string/action_edit_trip"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="never" />
     <item
         android:id="@+id/del_trip"
         android:icon="@drawable/ic_delete_black_18dp"
