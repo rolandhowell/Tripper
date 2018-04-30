@@ -3,6 +3,9 @@ package rh.tripper;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -90,6 +93,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
 
     String urlString = "http://ec2-18-221-155-124.us-east-2.compute.amazonaws.com:3000";
+    private static final int TRIPPER_SYNC_JOB_ID = 1;
     //String urlString = "http://10.0.2.2:3000/";
 
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -479,6 +483,9 @@ public class MainActivity extends AppCompatActivity
 
         MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
         getAllTrips.execute();
+
+        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        jobScheduler.schedule(new JobInfo.Builder(TRIPPER_SYNC_JOB_ID, new ComponentName(this, BackgroundSync.class)).setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY).setPeriodic(30000).build());
     }
 
     private void updateLabel() {
