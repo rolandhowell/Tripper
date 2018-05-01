@@ -139,6 +139,14 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         context = this;
 
+        JobInfo job = new JobInfo.Builder(TRIPPER_SYNC_JOB_ID, new ComponentName(this, BackgroundSync.class))
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setRequiresCharging(false)
+                .build();
+
+        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        jobScheduler.schedule(job);
+
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
@@ -483,9 +491,6 @@ public class MainActivity extends AppCompatActivity
 
         MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
         getAllTrips.execute();
-
-        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        jobScheduler.schedule(new JobInfo.Builder(TRIPPER_SYNC_JOB_ID, new ComponentName(this, BackgroundSync.class)).setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY).setPeriodic(30000).build());
     }
 
     private void updateLabel() {
@@ -515,9 +520,9 @@ public class MainActivity extends AppCompatActivity
                 });
     }
 
-    /*private void showToast(final String text) {
+    private void showToast(final String text) {
         Toast.makeText(context, text, Toast.LENGTH_LONG).show();
-    }*/
+    }
 
     private void showSnackbar(final String text) {
         View container = findViewById(R.id.drawer_layout);

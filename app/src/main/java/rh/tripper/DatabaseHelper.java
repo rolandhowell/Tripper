@@ -7,18 +7,18 @@ import android.provider.BaseColumns;
 
 public final class DatabaseHelper extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "tripper.db";
-    public static final int DATABASE_VERSION = 1;
 
     private static final String SQL_CREATE_TRIP_ENTRIES =
             "CREATE TABLE " + TripEntry.TABLE_NAME + " (" +
-                    TripEntry.COLUMN_NAME_TRIPID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    TripEntry.COLUMN_NAME_TRIPID + " INTEGER," +
                     TripEntry.COLUMN_NAME_TRIPNAME + " TEXT," +
                     TripEntry.COLUMN_NAME_STARTDATE + " DATE," +
                     TripEntry.COLUMN_NAME_EMAIL + " TEXT," +
-                    TripEntry.COLUMN_NAME_LOCAL + " TEXT)";
+                    TripEntry.COLUMN_NAME_LOCAL + " TEXT DEFAULT 'false')";
+
     private static final String SQL_CREATE_STOP_ENTRIES =
             "CREATE TABLE " + StopEntry.TABLE_NAME + " (" +
-                    StopEntry.COLUMN_NAME_STOPID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    StopEntry.COLUMN_NAME_STOPID + " INTEGER," +
                     StopEntry.COLUMN_NAME_TRIPID + " INTEGER," +
                     StopEntry.COLUMN_NAME_EMAIL + " TEXT," +
                     StopEntry.COLUMN_NAME_ARRIVAL + " DATE," +
@@ -27,7 +27,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
                     StopEntry.COLUMN_NAME_STOPDESC + " TEXT," +
                     StopEntry.COLUMN_NAME_LAT + " TEXT," +
                     StopEntry.COLUMN_NAME_LONG + " TEXT," +
-                    StopEntry.COLUMN_NAME_LOCAL + " TEXBOOT)";
+                    StopEntry.COLUMN_NAME_LOCAL + " TEXT DEFAULT 'false')";
 
     protected DatabaseHelper(Context context){
         super(context, DATABASE_NAME, null, 1);

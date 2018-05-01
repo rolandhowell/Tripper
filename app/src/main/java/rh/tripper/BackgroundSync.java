@@ -3,9 +3,12 @@ package rh.tripper;
 import android.app.job.JobParameters;
 import android.app.job.JobService;
 import android.content.ContentValues;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -23,6 +26,8 @@ public class BackgroundSync extends JobService {
 
     String email;
     String urlString = "http://ec2-18-221-155-124.us-east-2.compute.amazonaws.com:3000";
+
+    private static final String TAG = BackgroundSync.class.getSimpleName();
     JSONObject tripsJsonObject;
     JSONObject stopsJsonObject;
     DatabaseHelper mDBHelper;
@@ -30,8 +35,14 @@ public class BackgroundSync extends JobService {
 
     @Override
     public boolean onStartJob(JobParameters params) {
-        Sync sync = new BackgroundSync.Sync();
-        sync.execute();
+        Log.i(TAG, "onStartJob");
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        email = preferences.getString("Email", "");
+        email = "test@test.com";
+        if (email.length() > 0) {
+            sync = new BackgroundSync.Sync();
+            sync.execute();
+        }
         return true;
     }
 
@@ -54,6 +65,113 @@ public class BackgroundSync extends JobService {
             HttpURLConnection urlConnection;
             InputStream in;
 
+            mDBHelper = new DatabaseHelper(getApplicationContext());
+            SQLiteDatabase db = mDBHelper.getWritableDatabase();
+
+            String[] tripProjection = {
+                    DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID,
+                    DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME,
+                    DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE
+            };
+
+            String tripSelection = DatabaseHelper.TripEntry.COLUMN_NAME_LOCAL + " = ?";
+            String[] tripSelectionArgs = {"true"};
+
+            Cursor tripCursor = db.query(
+                    DatabaseHelper.TripEntry.TABLE_NAME,   // The table to query
+                    tripProjection,             // The array of columns to return (pass null to get all)
+                    tripSelection,              // The columns for the WHERE clause
+                    tripSelectionArgs,          // The values for the WHERE clause
+                    null,                   // don't group the rows
+                    null,                   // don't filter by row groups
+                    null               // The sort order
+            );
+
+            while (tripCursor.moveToNext()) {
+                try {
+                    URL url = new URL(urlString + "/sendtrip?tripid=" + tripCursor.getLong(tripCursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID)) + "&tripname=" + tripCursor.getString(tripCursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME)) + "&startdate=" + tripCursor.getString(tripCursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE)) + "&email=" + email);
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                    in = new BufferedInputStream(urlConnection.getInputStream());
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                    Boolean result = Boolean.valueOf(reader.readLine());
+                    urlConnection.disconnect();
+                    in.close();
+
+                    if (result) {
+                        ContentValues updateLocal = new ContentValues();
+                        updateLocal.put(DatabaseHelper.TripEntry.COLUMN_NAME_LOCAL, "false");
+
+                        String tripUpdate = DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID + " = ?";
+                        String[] tripUpdateArgs = {String.valueOf(tripCursor.getLong(tripCursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID)))};
+
+                        db.update(
+                                DatabaseHelper.TripEntry.TABLE_NAME,
+                                updateLocal,
+                                tripUpdate,
+                                tripUpdateArgs);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            tripCursor.close();
+
+            String[] stopProjection = {
+                    DatabaseHelper.StopEntry.COLUMN_NAME_STOPID,
+                    DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID,
+                    DatabaseHelper.StopEntry.COLUMN_NAME_EMAIL,
+                    DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL,
+                    DatabaseHelper.StopEntry.COLUMN_NAME_DEPT,
+                    DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME,
+                    DatabaseHelper.StopEntry.COLUMN_NAME_STOPDESC,
+                    DatabaseHelper.StopEntry.COLUMN_NAME_LAT,
+                    DatabaseHelper.StopEntry.COLUMN_NAME_LONG
+            };
+
+            String stopSelection = DatabaseHelper.StopEntry.COLUMN_NAME_LOCAL + " = ?";
+            String[] stopSelectionArgs = {"true"};
+
+            Cursor stopCursor = db.query(
+                    DatabaseHelper.StopEntry.TABLE_NAME,   // The table to query
+                    stopProjection,             // The array of columns to return (pass null to get all)
+                    stopSelection,              // The columns for the WHERE clause
+                    stopSelectionArgs,          // The values for the WHERE clause
+                    null,                   // don't group the rows
+                    null,                   // don't filter by row groups
+                    null               // The sort order
+            );
+
+            while (stopCursor.moveToNext()) {
+                try {
+                    URL url = new URL(urlString + "/sendstop?stopid=" + stopCursor.getLong(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPID)) + "&tripid=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID)) + "&email=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_EMAIL)) + "&arrivaldate=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL)) + "&deptdate=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_DEPT)) + "&stopname=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME)) + "&stopdesc=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPDESC)) + "&lat=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_LAT)) + "&long=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_LONG)));
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                    in = new BufferedInputStream(urlConnection.getInputStream());
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                    Boolean result = Boolean.valueOf(reader.readLine());
+                    urlConnection.disconnect();
+                    in.close();
+
+                    if (result) {
+                        ContentValues updateLocal = new ContentValues();
+                        updateLocal.put(DatabaseHelper.StopEntry.COLUMN_NAME_LOCAL, "false");
+
+                        String stopUpdate = DatabaseHelper.StopEntry.COLUMN_NAME_STOPID + " = ?";
+                        String[] stopUpdateArgs = {String.valueOf(stopCursor.getLong(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPID)))};
+
+                        db.update(
+                                DatabaseHelper.StopEntry.TABLE_NAME,
+                                updateLocal,
+                                stopUpdate,
+                                stopUpdateArgs);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            stopCursor.close();
+
             try {
                 URL url = new URL(urlString + "/getalltrips?email=" + email);
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -74,7 +192,7 @@ public class BackgroundSync extends JobService {
             }
 
             try {
-                URL url = new URL(urlString + "/getallstops?email=" + email);
+                URL url = new URL(urlString + "/getallstops2?email=" + email);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
@@ -92,7 +210,7 @@ public class BackgroundSync extends JobService {
                 e.printStackTrace();
             }
 
-            SQLiteDatabase db = mDBHelper.getWritableDatabase();
+            db = mDBHelper.getWritableDatabase();
             ContentValues tripDetails = new ContentValues();
 
             try {
@@ -100,7 +218,7 @@ public class BackgroundSync extends JobService {
                 for (int i = 0; i < tripJSON.length(); i++) {
                     JSONObject tripObj = tripJSON.getJSONObject(i);
 
-                    String[] projection = {DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID};
+                    String[] projection = {DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID, DatabaseHelper.TripEntry.COLUMN_NAME_LOCAL};
 
                     String selection = DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID + " = ?";
                     String[] selectionArgs = {String.valueOf(tripObj.getInt("tripID"))};
@@ -124,7 +242,7 @@ public class BackgroundSync extends JobService {
                     }
                     cursor.close();
 
-                    if (local == "false") {
+                    if (local == null) {
                         if (itemID > 0) {
                             tripDetails.put(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID, String.valueOf(tripObj.getInt("tripID")));
                             tripDetails.put(DatabaseHelper.TripEntry.COLUMN_NAME_EMAIL, email);
@@ -150,24 +268,24 @@ public class BackgroundSync extends JobService {
                     }
 
                     tripDetails.clear();
-
-                    mDBHelper.close();
                 }
+                mDBHelper.close();
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
             ContentValues stopDetails = new ContentValues();
+            db = mDBHelper.getWritableDatabase();
 
             try {
                 JSONArray stopJSON = stopsJsonObject.getJSONArray("stops");
                 for (int i = 0; i < stopJSON.length(); i++) {
                     JSONObject stopObj = stopJSON.getJSONObject(i);
 
-                    String[] projection = {DatabaseHelper.StopEntry.COLUMN_NAME_STOPID};
+                    String[] projection = {DatabaseHelper.StopEntry.COLUMN_NAME_STOPID, DatabaseHelper.StopEntry.COLUMN_NAME_LOCAL};
 
-                    String selection = DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID + " = ?";
-                    String[] selectionArgs = {String.valueOf(stopObj.getInt("tripID"))};
+                    String selection = DatabaseHelper.StopEntry.COLUMN_NAME_STOPID + " = ?";
+                    String[] selectionArgs = {String.valueOf(stopObj.getInt("stopID"))};
 
                     Cursor cursor = db.query(
                             DatabaseHelper.StopEntry.TABLE_NAME,
@@ -188,11 +306,11 @@ public class BackgroundSync extends JobService {
                     }
                     cursor.close();
 
-                    if (local == "false") {
+                    if (local == null) {
                         if (itemID > 0) {
                             stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPID, String.valueOf(stopObj.getInt("stopID")));
                             stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_EMAIL, email);
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID, String.valueOf(stopObj.getInt("tripID")));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID, stopObj.getInt("tripID"));
                             stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL, stopObj.getString("arrivalDate"));
                             stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_DEPT, stopObj.getString("deptDate"));
                             stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME, stopObj.getString("stopName"));
@@ -211,7 +329,7 @@ public class BackgroundSync extends JobService {
                         } else {
                             stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPID, String.valueOf(stopObj.getInt("stopID")));
                             stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_EMAIL, email);
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID, String.valueOf(stopObj.getInt("tripID")));
+                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID, stopObj.getString("tripID"));
                             stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL, stopObj.getString("arrivalDate"));
                             stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_DEPT, stopObj.getString("deptDate"));
                             stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME, stopObj.getString("stopName"));
@@ -224,14 +342,15 @@ public class BackgroundSync extends JobService {
                     }
 
                     stopDetails.clear();
-
-                    mDBHelper.close();
                 }
+
+                mDBHelper.close();
+
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            String[] tripProjection = {
+            /*String[] tripProjection = {
                     DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID,
                     DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME,
                     DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE
@@ -309,7 +428,7 @@ public class BackgroundSync extends JobService {
                 }
             }
 
-            stopCursor.close();
+            stopCursor.close();*/
             return null;
         }
 
