@@ -46,9 +46,8 @@ public class LandingActivity extends AppCompatActivity {
         String user = preferences.getString("User", null);
 
         if (user != null) {
-            Intent i = new Intent(context, MainActivity.class);
-            i.putExtra("email", user);
-            startActivityForResult(i, 1);
+            Intent i = new Intent(getApplicationContext(), MainActivity.class);
+            startActivity(i);
         } else {
             setContentView(R.layout.activity_landing);
 
@@ -141,9 +140,8 @@ public class LandingActivity extends AppCompatActivity {
                 editor.putString("User", email);
                 editor.apply();
 
-                Intent i = new Intent(viewVar.getContext(), MainActivity.class);
-                i.putExtra("email", email);
-                startActivityForResult(i, 1);
+                Intent i = new Intent(getApplicationContext(), MainActivity.class);
+                startActivity(i);
             } else {
                 AlertDialog.Builder alertBuilder = new AlertDialog.Builder(context);
                 alertBuilder.setMessage("The email or password you entered was incorrect.");

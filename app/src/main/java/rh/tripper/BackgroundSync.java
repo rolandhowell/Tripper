@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,14 +31,14 @@ public class BackgroundSync extends JobService {
     JSONObject stopsJsonObject;
     DatabaseHelper mDBHelper;
     BackgroundSync.Sync sync;
+    JobParameters params;
 
     @Override
     public boolean onStartJob(JobParameters params) {
-        Log.i(TAG, "onStartJob");
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         email = preferences.getString("Email", "");
-        email = "test@test.com";
         if (email.length() > 0) {
+            this.params = params;
             sync = new BackgroundSync.Sync();
             sync.execute();
         }
@@ -58,6 +57,8 @@ public class BackgroundSync extends JobService {
 
         protected void onPreExecute() {
             super.onPreExecute();
+
+
         }
 
         @Override
@@ -233,7 +234,7 @@ public class BackgroundSync extends JobService {
                             null
                     );
 
-                    String local = null;
+                    String local = "false";
                     long itemID = 0;
 
                     while (cursor.moveToNext()) {
@@ -242,7 +243,7 @@ public class BackgroundSync extends JobService {
                     }
                     cursor.close();
 
-                    if (local == null) {
+                    if (local.equals("false")) {
                         if (itemID > 0) {
                             tripDetails.put(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID, String.valueOf(tripObj.getInt("tripID")));
                             tripDetails.put(DatabaseHelper.TripEntry.COLUMN_NAME_EMAIL, email);
@@ -297,7 +298,7 @@ public class BackgroundSync extends JobService {
                             null
                     );
 
-                    String local = null;
+                    String local = "false";
                     long itemID = 0;
 
                     while (cursor.moveToNext()) {
@@ -306,7 +307,7 @@ public class BackgroundSync extends JobService {
                     }
                     cursor.close();
 
-                    if (local == null) {
+                    if (local.equals("false")) {
                         if (itemID > 0) {
                             stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPID, String.valueOf(stopObj.getInt("stopID")));
                             stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_EMAIL, email);
@@ -350,91 +351,12 @@ public class BackgroundSync extends JobService {
                 e.printStackTrace();
             }
 
-            /*String[] tripProjection = {
-                    DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID,
-                    DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME,
-                    DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE
-            };
-
-            String tripSelection = DatabaseHelper.TripEntry.COLUMN_NAME_LOCAL + " = ?";
-            String[] tripSelectionArgs = {"true"};
-
-            Cursor tripCursor = db.query(
-                    DatabaseHelper.TripEntry.TABLE_NAME,   // The table to query
-                    tripProjection,             // The array of columns to return (pass null to get all)
-                    tripSelection,              // The columns for the WHERE clause
-                    tripSelectionArgs,          // The values for the WHERE clause
-                    null,                   // don't group the rows
-                    null,                   // don't filter by row groups
-                    null               // The sort order
-            );
-
-            while (tripCursor.moveToNext()) {
-                try {
-                    URL url = new URL(urlString + "/sendtrip?tripid=" + tripCursor.getLong(tripCursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID)) + "&tripname=" + tripCursor.getString(tripCursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME)) + "&startdate=" + tripCursor.getString(tripCursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE)) + "&email=" + email);
-                    urlConnection = (HttpURLConnection) url.openConnection();
-                    in = new BufferedInputStream(urlConnection.getInputStream());
-                    urlConnection.disconnect();
-                    in.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            tripCursor.close();
-
-            String[] stopProjection = {
-                    DatabaseHelper.StopEntry.COLUMN_NAME_STOPID,
-                    DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID,
-                    DatabaseHelper.StopEntry.COLUMN_NAME_EMAIL,
-                    DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL,
-                    DatabaseHelper.StopEntry.COLUMN_NAME_DEPT,
-                    DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME,
-                    DatabaseHelper.StopEntry.COLUMN_NAME_STOPDESC,
-                    DatabaseHelper.StopEntry.COLUMN_NAME_LAT,
-                    DatabaseHelper.StopEntry.COLUMN_NAME_LONG
-            };
-
-            String stopSelection = DatabaseHelper.StopEntry.COLUMN_NAME_LOCAL + " = ?";
-            String[] stopSelectionArgs = {"true"};
-
-            Cursor stopCursor = db.query(
-                    DatabaseHelper.StopEntry.TABLE_NAME,   // The table to query
-                    stopProjection,             // The array of columns to return (pass null to get all)
-                    stopSelection,              // The columns for the WHERE clause
-                    stopSelectionArgs,          // The values for the WHERE clause
-                    null,                   // don't group the rows
-                    null,                   // don't filter by row groups
-                    null               // The sort order
-            );
-
-            while (stopCursor.moveToNext()) {
-                try {
-                    URL url = new URL(urlString + "/sendstop?stopid=" + stopCursor.getLong(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPID)) +
-                            "&tripid=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID)) +
-                            "&email=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_EMAIL)) +
-                            "&arrivaldate=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL)) +
-                            "&deptdate=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_DEPT)) +
-                            "&stopname=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME)) +
-                            "&stopdesc=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPDESC)) +
-                            "&lat=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_LAT)) +
-                            "&long=" + stopCursor.getString(stopCursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_LONG)));
-                    urlConnection = (HttpURLConnection) url.openConnection();
-                    in = new BufferedInputStream(urlConnection.getInputStream());
-                    urlConnection.disconnect();
-                    in.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            stopCursor.close();*/
-            return null;
+            return true;
         }
 
         @Override
         protected void onPostExecute(Boolean success) {
-            jobFinished(null, !success);
+            jobFinished(params, !success);
         }
     }
 

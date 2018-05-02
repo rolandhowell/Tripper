@@ -111,12 +111,6 @@ public class UpdateProfileActivity extends AppCompatActivity {
         changePasswordButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                /*Change password
-                Show dialog
-                Change password
-                Update server
-                 */
-
                 final View changePasswordDialog = View.inflate(context, R.layout.change_password_dialog, null);
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -155,6 +149,7 @@ public class UpdateProfileActivity extends AppCompatActivity {
         Snackbar.make(findViewById(R.id.main_layout), mainTextString, Snackbar.LENGTH_INDEFINITE).setAction(actionString, listener).show();
     }
 
+    @SuppressLint("StaticFieldLeak")
     private class GetProfileDetails extends AsyncTask<Void, Void, JSONObject> {
 
         @Override
@@ -165,8 +160,8 @@ public class UpdateProfileActivity extends AppCompatActivity {
         @Override
         protected JSONObject doInBackground(Void... params) {
 
-            HttpURLConnection urlConnection = null;
-            InputStream in = null;
+            HttpURLConnection urlConnection;
+            InputStream in;
 
             try {
                 URL url = new URL("http://10.0.2.2:3000/getprofiledetails?email=" + email);
@@ -179,33 +174,42 @@ public class UpdateProfileActivity extends AppCompatActivity {
                     responseStrBuilder.append(inputStr);
 
                 user = new JSONObject(responseStrBuilder.toString());
+
+                return user;
             } catch (MalformedURLException e) {
                 e.printStackTrace();
+                return null;
             } catch (IOException e) {
                 e.printStackTrace();
-            } finally {
-                return user;
+                return null;
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return null;
             }
         }
 
         @Override
         protected void onPostExecute(JSONObject user) {
-            try {
-                JSONArray userJSON = user.getJSONArray("user");
+            if (user != null) {
+                try {
+                    JSONArray userJSON = user.getJSONArray("user");
 
-                JSONObject userObj = userJSON.getJSONObject(0);
+                    JSONObject userObj = userJSON.getJSONObject(0);
 
-                name = userObj.getString("name");
-                city = userObj.getString("city");
-                country = userObj.getString("country");
-                dob = userObj.getString("dob");
+                    name = userObj.getString("name");
+                    city = userObj.getString("city");
+                    country = userObj.getString("country");
+                    dob = userObj.getString("dob");
 
-                nameBox.setText(name);
-                cityBox.setText(city);
-                countryBox.setText(country);
-                dobBox.setText(dob);
-            } catch (JSONException e) {
-                e.printStackTrace();
+                    nameBox.setText(name);
+                    cityBox.setText(city);
+                    countryBox.setText(country);
+                    dobBox.setText(dob);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                showSnackbar("There was a problem. Please try again.");
             }
         }
     }
@@ -221,8 +225,8 @@ public class UpdateProfileActivity extends AppCompatActivity {
         @Override
         protected Boolean doInBackground(Void... params) {
 
-            HttpURLConnection urlConnection = null;
-            InputStream in = null;
+            HttpURLConnection urlConnection;
+            InputStream in;
 
             try {
                 URL url = new URL("http://10.0.2.2:3000/upprofile?email=" + email + "&name=" + name + "&city=" + city + "&country=" + country + "&dob=" + dob);
@@ -323,8 +327,8 @@ public class UpdateProfileActivity extends AppCompatActivity {
         @Override
         protected Boolean doInBackground(Void... params) {
 
-            HttpURLConnection urlConnection = null;
-            InputStream in = null;
+            HttpURLConnection urlConnection;
+            InputStream in;
 
             try {
                 URL url = new URL("http://10.0.2.2:3000/delprofile?email=" + email);

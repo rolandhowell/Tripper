@@ -139,13 +139,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         context = this;
 
-        JobInfo job = new JobInfo.Builder(TRIPPER_SYNC_JOB_ID, new ComponentName(this, BackgroundSync.class))
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setRequiresCharging(false)
-                .build();
-
-        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        jobScheduler.schedule(job);
+        setupSync();
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -397,11 +391,8 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        Bundle extras = getIntent().getExtras();
-
-        if (extras != null) {
-            email = extras.getString("email");
-        }
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        email = preferences.getString("User", null);
 
         llBottomSheet = findViewById(R.id.bottom_sheet);
 
@@ -732,6 +723,16 @@ public class MainActivity extends AppCompatActivity
         map.getUiSettings().setMapToolbarEnabled(false);
     }
 
+    private void setupSync() {
+        JobInfo job = new JobInfo.Builder(TRIPPER_SYNC_JOB_ID, new ComponentName(this, BackgroundSync.class))
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setRequiresCharging(false)
+                .build();
+
+        JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        jobScheduler.schedule(job);
+    }
+
     @SuppressLint("StaticFieldLeak")
     private class GetAllTrips extends AsyncTask<String, Void, JSONObject> {
 
@@ -743,61 +744,57 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected JSONObject doInBackground(String... emailIn) {
 
-            /*if(!offlineMode) {
-                //offline mode enabled
+            DatabaseHelper mDbHelper = new DatabaseHelper(context);
 
-                DatabaseHelper mDbHelper = new DatabaseHelper(context);
+            SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
-                SQLiteDatabase db = mDbHelper.getReadableDatabase();
+            // Define a projection that specifies which columns from the database
+            // you will actually use after this query.
+            String[] projection = {
+                    DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID,
+                    DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME,
+                    DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE
+            };
 
-                // Define a projection that specifies which columns from the database
-                // you will actually use after this query.
-                String[] projection = {
-                        DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID,
-                        DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME,
-                        DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE
-                };
+            // How you want the results sorted in the resulting Cursor
+            String sortOrder =
+                    DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE + " DESC";
 
-                // How you want the results sorted in the resulting Cursor
-                String sortOrder =
-                        DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE + " DESC";
+            Cursor cursor = db.query(
+                    DatabaseHelper.TripEntry.TABLE_NAME,   // The table to query
+                    projection,             // The array of columns to return (pass null to get all)
+                    null,              // The columns for the WHERE clause
+                    null,          // The values for the WHERE clause
+                    null,                   // don't group the rows
+                    null,                   // don't filter by row groups
+                    sortOrder               // The sort order
+            );
 
-                Cursor cursor = db.query(
-                        DatabaseHelper.TripEntry.TABLE_NAME,   // The table to query
-                        projection,             // The array of columns to return (pass null to get all)
-                        null,              // The columns for the WHERE clause
-                        null,          // The values for the WHERE clause
-                        null,                   // don't group the rows
-                        null,                   // don't filter by row groups
-                        sortOrder               // The sort order
-                );
+            tripsJsonObject = new JSONObject();
 
-                tripsJsonObject = new JSONObject();
+            String tripJSON = "{\"trips\":[";
 
-                String tripJSON = "{\"trips\":[";
+            while (cursor.moveToNext()) {
+                tripJSON = tripJSON + "{\"tripID\":" + cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID)) + ", \"tripName\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME)) + "\",\"startDate\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE)) + "\"},";
+            }
+            cursor.close();
 
-                while(cursor.moveToNext()) {
-                    tripJSON = tripJSON + "{\"tripID\":" + cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID)) + ", \"tripName\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME)) + "\",\"startDate\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_STARTDATE)) + "\"},";
-                }
-                cursor.close();
+            tripJSON = tripJSON.substring(0, tripJSON.length() - 1);
 
-                tripJSON = tripJSON.substring(0, tripJSON.length() - 1);
+            tripJSON = tripJSON + "]}";
 
-                tripJSON = tripJSON + "]}";
+            StringBuilder responseStrBuilder = new StringBuilder();
+            responseStrBuilder.append(tripJSON);
 
-                StringBuilder responseStrBuilder = new StringBuilder();
-                responseStrBuilder.append(tripJSON);
+            try {
+                tripsJsonObject = new JSONObject(responseStrBuilder.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
 
-                try {
-                    tripsJsonObject = new JSONObject(responseStrBuilder.toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                return tripsJsonObject;
-            } else {*/
+            return tripsJsonObject;
             //offline mode disabled
-            HttpURLConnection urlConnection;
+            /*HttpURLConnection urlConnection;
             InputStream in;
 
             try {
@@ -820,7 +817,7 @@ public class MainActivity extends AppCompatActivity
                 e.printStackTrace();
             } finally {
                 return tripsJsonObject;
-            }
+            }*/
         }
 
         @Override
@@ -907,73 +904,6 @@ public class MainActivity extends AppCompatActivity
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    @SuppressLint("StaticFieldLeak")
-    private class GetTripName extends AsyncTask<Void, Void, String> {
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected String doInBackground(Void... params) {
-
-            HttpURLConnection urlConnection;
-            InputStream in;
-            String result = null;
-
-            try {
-                URL url = new URL(urlString + "/gettripname?tripid=" + currentTrip);
-                urlConnection = (HttpURLConnection) url.openConnection();
-                in = new BufferedInputStream(urlConnection.getInputStream());
-                BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-                StringBuilder responseStrBuilder = new StringBuilder();
-                String inputStr;
-                while ((inputStr = streamReader.readLine()) != null)
-                    responseStrBuilder.append(inputStr);
-
-                result = responseStrBuilder.toString();
-
-                urlConnection.disconnect();
-                in.close();
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                return result;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            final View editTripView = View.inflate(context, R.layout.edit_trip_dialog, null);
-            final EditText newTripName = editTripView.findViewById(R.id.editTripName);
-
-            newTripName.setText(result);
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-            builder.setView(editTripView)
-                    .setCancelable(false)
-                    .setPositiveButton("Update", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            String temp = newTripName.getText().toString();
-
-                            MainActivity.SetTripName setTripName = new MainActivity.SetTripName();
-                            setTripName.execute(temp);
-
-                            dialog.cancel();
-                        }
-                    })
-
-                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            dialog.cancel();
-                        }
-                    }).show();
         }
     }
 
@@ -1115,7 +1045,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @SuppressLint("StaticFieldLeak")
-    private class SetTripName extends AsyncTask<String, Void, Boolean> {
+    private class GetTripName extends AsyncTask<Void, Void, String> {
 
         @Override
         protected void onPreExecute() {
@@ -1123,36 +1053,66 @@ public class MainActivity extends AppCompatActivity
         }
 
         @Override
-        protected Boolean doInBackground(String... newName) {
+        protected String doInBackground(Void... params) {
 
-            HttpURLConnection urlConnection;
-            InputStream in;
+            String result = null;
+            DatabaseHelper mDbHelper = new DatabaseHelper(context);
 
-            try {
-                URL url = new URL(urlString + "/settripname?tripid=" + currentTrip + "&tripname=" + newName[0]);
-                urlConnection = (HttpURLConnection) url.openConnection();
-                in = new BufferedInputStream(urlConnection.getInputStream());
-                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-                result = Boolean.valueOf(reader.readLine());
+            SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
-                urlConnection.disconnect();
-                in.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                return result;
+            // Define a projection that specifies which columns from the database
+            // you will actually use after this query.
+            String[] projection = {
+                    DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME
+            };
+
+            String selection = DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID + " = ?";
+            String[] selectionArgs = {String.valueOf(currentTrip)};
+
+            Cursor cursor = db.query(
+                    DatabaseHelper.TripEntry.TABLE_NAME,   // The table to query
+                    projection,             // The array of columns to return (pass null to get all)
+                    selection,              // The columns for the WHERE clause
+                    selectionArgs,          // The values for the WHERE clause
+                    null,                   // don't group the rows
+                    null,                   // don't filter by row groups
+                    null               // The sort order
+            );
+
+            while (cursor.moveToNext()) {
+                result = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME));
             }
+            cursor.close();
+
+            return result;
         }
 
         @Override
-        protected void onPostExecute(Boolean result) {
-            if (result) {
-                Snackbar.make(findViewById(R.id.drawer_layout), "Trip updated", Snackbar.LENGTH_LONG).show();
-                MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
-                getAllTrips.execute(email);
-            } else {
-                Snackbar.make(findViewById(R.id.drawer_layout), "Error updating trip", Snackbar.LENGTH_LONG).show();
-            }
+        protected void onPostExecute(String result) {
+            final View editTripView = View.inflate(context, R.layout.edit_trip_dialog, null);
+            final EditText newTripName = editTripView.findViewById(R.id.editTripName);
+
+            newTripName.setText(result);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            builder.setView(editTripView)
+                    .setCancelable(false)
+                    .setPositiveButton("Update", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            String temp = newTripName.getText().toString();
+
+                            MainActivity.SetTripName setTripName = new MainActivity.SetTripName();
+                            setTripName.execute(temp);
+
+                            dialog.cancel();
+                        }
+                    })
+
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                        }
+                    }).show();
         }
     }
 
@@ -1282,6 +1242,68 @@ public class MainActivity extends AppCompatActivity
     }
 
     @SuppressLint("StaticFieldLeak")
+    private class SetTripName extends AsyncTask<String, Void, Boolean> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Boolean doInBackground(String... newName) {
+            mDBHelper = new DatabaseHelper(getApplicationContext());
+            SQLiteDatabase db = mDBHelper.getWritableDatabase();
+            ContentValues details = new ContentValues();
+            db = mDBHelper.getWritableDatabase();
+
+            details.put(DatabaseHelper.TripEntry.COLUMN_NAME_TRIPNAME, newName[0]);
+            details.put(DatabaseHelper.TripEntry.COLUMN_NAME_LOCAL, "true");
+
+            String update = DatabaseHelper.TripEntry.COLUMN_NAME_TRIPID + " = ?";
+            String[] updateArgs = {String.valueOf(currentTrip)};
+
+            db.update(
+                    DatabaseHelper.TripEntry.TABLE_NAME,
+                    details,
+                    update,
+                    updateArgs);
+
+            mDBHelper.close();
+            /*
+            HttpURLConnection urlConnection;
+            InputStream in;
+
+            try {
+                URL url = new URL(urlString + "/settripname?tripid=" + currentTrip + "&tripname=" + newName[0]);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                in = new BufferedInputStream(urlConnection.getInputStream());
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                result = Boolean.valueOf(reader.readLine());
+
+                urlConnection.disconnect();
+                in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                return result;
+            }*/
+
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if (result) {
+                Snackbar.make(findViewById(R.id.drawer_layout), "Trip updated", Snackbar.LENGTH_LONG).show();
+                MainActivity.GetAllTrips getAllTrips = new MainActivity.GetAllTrips();
+                getAllTrips.execute(email);
+            } else {
+                Snackbar.make(findViewById(R.id.drawer_layout), "Error updating trip", Snackbar.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
     private class GetAllStops extends AsyncTask<Void, Void, JSONObject> {
 
         @Override
@@ -1292,71 +1314,67 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected JSONObject doInBackground(Void... params) {
 
-            /*if(!offlineMode) {
-                //offline mode enabled
-                DatabaseHelper mDbHelper = new DatabaseHelper(context);
+            DatabaseHelper mDbHelper = new DatabaseHelper(context);
 
-                SQLiteDatabase db = mDbHelper.getReadableDatabase();
+            SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
-                // Define a projection that specifies which columns from the database
-                // you will actually use after this query.
-                String[] projection = {
-                        DatabaseHelper.StopEntry.COLUMN_NAME_STOPID,
-                        DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME,
-                        DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL,
-                        DatabaseHelper.StopEntry.COLUMN_NAME_DEPT,
-                        DatabaseHelper.StopEntry.COLUMN_NAME_STOPDESC,
-                        DatabaseHelper.StopEntry.COLUMN_NAME_LAT,
-                        DatabaseHelper.StopEntry.COLUMN_NAME_LONG
-                };
+            // Define a projection that specifies which columns from the database
+            // you will actually use after this query.
+            String[] projection = {
+                    DatabaseHelper.StopEntry.COLUMN_NAME_STOPID,
+                    DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME,
+                    DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL,
+                    DatabaseHelper.StopEntry.COLUMN_NAME_DEPT,
+                    DatabaseHelper.StopEntry.COLUMN_NAME_STOPDESC,
+                    DatabaseHelper.StopEntry.COLUMN_NAME_LAT,
+                    DatabaseHelper.StopEntry.COLUMN_NAME_LONG
+            };
 
-                // Filter results WHERE "title" = 'My Title'
-                String selection = DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID + " = ?";
-                String[] selectionArgs = {String.valueOf(currentTrip)};
+            // Filter results WHERE "title" = 'My Title'
+            String selection = DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID + " = ?";
+            String[] selectionArgs = {String.valueOf(currentTrip)};
 
 
-                // How you want the results sorted in the resulting Cursor
-                String sortOrder =
-                        DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL + " DESC";
+            // How you want the results sorted in the resulting Cursor
+            String sortOrder =
+                    DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL + " DESC";
 
-                Cursor cursor = db.query(
-                        DatabaseHelper.StopEntry.TABLE_NAME,   // The table to query
-                        projection,             // The array of columns to return (pass null to get all)
-                        selection,              // The columns for the WHERE clause
-                        selectionArgs,          // The values for the WHERE clause
-                        null,                   // don't group the rows
-                        null,                   // don't filter by row groups
-                        sortOrder               // The sort order
-                );
+            Cursor cursor = db.query(
+                    DatabaseHelper.StopEntry.TABLE_NAME,   // The table to query
+                    projection,             // The array of columns to return (pass null to get all)
+                    selection,              // The columns for the WHERE clause
+                    selectionArgs,          // The values for the WHERE clause
+                    null,                   // don't group the rows
+                    null,                   // don't filter by row groups
+                    sortOrder               // The sort order
+            );
 
-                stopsJsonObject = new JSONObject();
+            stopsJsonObject = new JSONObject();
 
-                String stopJSON = "{\"stops\":[";
+            String stopJSON = "{\"stops\":[";
 
-                while(cursor.moveToNext()) {
-                    stopJSON = stopJSON + "{\"stopID\":" + cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPID)) + ", \"stopName\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME)) + "\",\"arrivalDate\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL)) + "\",\"deptDate\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_DEPT)) + "\",\"stopDesc\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPDESC)) + "\",\"lat\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_LAT)) + "\",\"long\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_LONG)) + "\"},";
-                }
-                cursor.close();
-
-                stopJSON = stopJSON.substring(0, stopJSON.length() - 1);
-
-                stopJSON = stopJSON + "]}";
-
-                Log.i(TAG, stopJSON);
-
-                StringBuilder responseStrBuilder = new StringBuilder();
-                responseStrBuilder.append(stopJSON);
-
-                try {
-                    stopsJsonObject = new JSONObject(responseStrBuilder.toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                return stopsJsonObject;
+            while (cursor.moveToNext()) {
+                stopJSON = stopJSON + "{\"stopID\":" + cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPID)) + ", \"stopName\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME)) + "\",\"arrivalDate\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL)) + "\",\"deptDate\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_DEPT)) + "\",\"stopDesc\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPDESC)) + "\",\"lat\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_LAT)) + "\",\"long\":\"" + cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_LONG)) + "\"},";
             }
-            else
-            {*/
+            cursor.close();
+
+            stopJSON = stopJSON.substring(0, stopJSON.length() - 1);
+
+            stopJSON = stopJSON + "]}";
+
+            Log.i(TAG, stopJSON);
+
+            StringBuilder responseStrBuilder = new StringBuilder();
+            responseStrBuilder.append(stopJSON);
+
+            try {
+                stopsJsonObject = new JSONObject(responseStrBuilder.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            return stopsJsonObject;
+                /*
             HttpURLConnection urlConnection;
             InputStream in;
 
@@ -1380,7 +1398,7 @@ public class MainActivity extends AppCompatActivity
             } finally {
                 return stopsJsonObject;
             }
-            //}
+            //}*/
         }
 
         @Override
@@ -1577,48 +1595,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     @SuppressLint("StaticFieldLeak")
-    private class UpdateStopDetails extends AsyncTask<String, Void, Boolean> {
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected Boolean doInBackground(String... details) {
-
-            HttpURLConnection urlConnection;
-            InputStream in;
-
-            try {
-                URL url = new URL(urlString + "/updatestopdetails?stopid=" + currentStop + "&arrdate=" + details[0] + "&deptdate=" + details[1] + "&name=" + details[2] + "&desc=" + details[3]);
-                urlConnection = (HttpURLConnection) url.openConnection();
-                in = new BufferedInputStream(urlConnection.getInputStream());
-                urlConnection.disconnect();
-                in.close();
-                return true;
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                return false;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Boolean result) {
-            if (result) {
-                MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
-                getAllStops.execute();
-                showSnackbar("Stop updated.");
-            } else {
-                showSnackbar("There was a problem, please try again.");
-            }
-        }
-    }
-
-    @SuppressLint("StaticFieldLeak")
     private class DeleteTrip extends AsyncTask<Void, Void, Boolean> {
 
         @Override
@@ -1701,6 +1677,77 @@ public class MainActivity extends AppCompatActivity
     }
 
     @SuppressLint("StaticFieldLeak")
+    private class UpdateStopDetails extends AsyncTask<String, Void, Boolean> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Boolean doInBackground(String... details) {
+
+            mDBHelper = new DatabaseHelper(getApplicationContext());
+            SQLiteDatabase db = mDBHelper.getWritableDatabase();
+            ContentValues stopDetails = new ContentValues();
+            db = mDBHelper.getWritableDatabase();
+
+            try {
+                stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL, details[0]);
+                stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_DEPT, details[1]);
+                stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME, details[2]);
+                stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPDESC, details[3]);
+                stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_LOCAL, "true");
+
+                String update = DatabaseHelper.StopEntry.COLUMN_NAME_STOPID + " = ?";
+                String[] updateArgs = {String.valueOf(currentStop)};
+
+                db.update(
+                        DatabaseHelper.StopEntry.TABLE_NAME,
+                        stopDetails,
+                        update,
+                        updateArgs);
+
+                mDBHelper.close();
+
+                return true;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            /*HttpURLConnection urlConnection;
+            InputStream in;
+
+            try {
+                URL url = new URL(urlString + "/updatestopdetails?stopid=" + currentStop + "&arrdate=" + details[0] + "&deptdate=" + details[1] + "&name=" + details[2] + "&desc=" + details[3]);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                in = new BufferedInputStream(urlConnection.getInputStream());
+                urlConnection.disconnect();
+                in.close();
+                return true;
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+                return false;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }*/
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if (result) {
+                MainActivity.GetAllStops getAllStops = new MainActivity.GetAllStops();
+                getAllStops.execute();
+                showSnackbar("Stop updated.");
+            } else {
+                showSnackbar("There was a problem, please try again.");
+            }
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
     private class UpdateStopLocation extends AsyncTask<Void, Void, Boolean> {
 
         @Override
@@ -1711,7 +1758,39 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected Boolean doInBackground(Void... details) {
 
-            HttpURLConnection urlConnection;
+            mDBHelper = new DatabaseHelper(getApplicationContext());
+            SQLiteDatabase db = mDBHelper.getWritableDatabase();
+            ContentValues stopDetails = new ContentValues();
+            db = mDBHelper.getWritableDatabase();
+
+            try {
+                if (byCurrLoc) {
+                    stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_LAT, String.valueOf(mLastLocation.getLatitude()));
+                    stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_LONG, String.valueOf(mLastLocation.getLongitude()));
+                } else {
+                    stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_LAT, String.valueOf(addStopLat));
+                    stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_LONG, String.valueOf(addStopLong));
+                }
+                stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_LOCAL, "true");
+
+                String update = DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID + " = ?";
+                String[] updateArgs = {String.valueOf(currentStop)};
+
+                db.update(
+                        DatabaseHelper.StopEntry.TABLE_NAME,
+                        stopDetails,
+                        update,
+                        updateArgs);
+
+                mDBHelper.close();
+
+                return true;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            /*HttpURLConnection urlConnection;
             InputStream in;
 
             try {
@@ -1733,7 +1812,7 @@ public class MainActivity extends AppCompatActivity
             } catch (IOException e) {
                 e.printStackTrace();
                 return false;
-            }
+            }*/
         }
 
         @Override

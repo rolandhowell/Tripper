@@ -5,8 +5,10 @@ import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -170,9 +172,13 @@ public class RegisterActivity extends AppCompatActivity {
 
             if (result == true)
             {
-                Intent i = new Intent(viewVar.getContext(), MainActivity.class);
-                i.putExtra("email", email);
-                startActivityForResult(i, 1);
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putString("User", email);
+                editor.apply();
+
+                Intent i = new Intent(getApplicationContext(), MainActivity.class);
+                startActivity(i);
             } else {
                 AlertDialog.Builder alertBuilder = new AlertDialog.Builder(context);
                 alertBuilder.setMessage("An account already exists for that email. Would you like to log in instead?");
