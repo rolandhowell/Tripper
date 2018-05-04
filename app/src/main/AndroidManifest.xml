@@ -46,6 +46,14 @@
             android:value="AIzaSyCsxWgRlKnfPKb6X1ZKHmo3vlfNXMUfNgo" />
 
         <activity android:name=".UpdateProfileActivity"></activity>
+
+        <service
+            android:name=".BackgroundSync"
+            android:label="Tripper Background Sync"
+            android:permission="android.permission.BIND_JOB_SERVICE">
+
+        </service>
+
     </application>
 
 </manifest>

@@ -637,7 +637,7 @@ public class MainActivity extends AppCompatActivity
 
                 break;
             case R.id.action_refresh:
-
+                OnDemandSync sync = new OnDemandSync(context, email);
                 break;
         }
 
