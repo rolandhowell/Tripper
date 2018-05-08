@@ -9,7 +9,7 @@
     <string name="regButton">Register</string>
     <string name="title_activity_main">MainActivity</string>
 
-    <string name="joinTripper">Register and start using tripper:</string>
+    <string name="joinTripper">Register and start using Tripper:</string>
     <string name="regName">name</string>
     <string name="TandCs">Tick to accept out T and Cs</string>
     <string name="city">city (optional)</string>

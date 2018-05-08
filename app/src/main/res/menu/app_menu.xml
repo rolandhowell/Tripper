@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/action_refresh"
-        android:icon="@drawable/ic_loop_white_24dp"
+        android:icon="@drawable/ic_sync_white_24dp"
         android:title="Sync Data"
         app:showAsAction="always" />
     <item
