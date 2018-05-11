@@ -8,6 +8,10 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -55,10 +59,19 @@ public class BackgroundSync extends JobService {
 
     private class Sync extends AsyncTask<Void, Void, Boolean> {
 
+        View progress;
+        LinearLayout progressLayout;
+        LayoutInflater layoutInflater;
+
         protected void onPreExecute() {
             super.onPreExecute();
+            Toast.makeText(getApplicationContext(), "Starting Background Sync", Toast.LENGTH_SHORT).show();
 
+            layoutInflater = LayoutInflater.from(getApplicationContext());
+            progress = layoutInflater.inflate(R.layout.activity_main, null, false);
+            progressLayout = progress.findViewById(R.id.syncLayout);
 
+            progressLayout.setVisibility(View.VISIBLE);
         }
 
         @Override
@@ -357,6 +370,7 @@ public class BackgroundSync extends JobService {
         @Override
         protected void onPostExecute(Boolean success) {
             jobFinished(params, !success);
+            progressLayout.setVisibility(View.INVISIBLE);
         }
     }
 

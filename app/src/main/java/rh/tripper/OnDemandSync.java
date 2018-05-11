@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -36,10 +37,9 @@ class OnDemandSync {
     }
 
     private class Sync extends AsyncTask<Void, Void, Boolean> {
-
         protected void onPreExecute() {
             super.onPreExecute();
-
+            Toast.makeText(context, "Starting Manual Sync", Toast.LENGTH_SHORT).show();
         }
 
         @Override
@@ -337,7 +337,6 @@ class OnDemandSync {
 
         @Override
         protected void onPostExecute(Boolean success) {
-
         }
     }
 }

@@ -6,16 +6,10 @@
     android:layout_height="match_parent"
     tools:context="rh.tripper.LandingActivity"
     android:theme="@style/AppTheme.NoActionBar"
-    android:background="@color/bg"
+    android:background="@color/primaryColor"
     android:clipToPadding="false"
     android:padding="20dp">
 
-    <android.support.constraint.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/bgLight"
-        android:padding="20dp"
-        android:elevation="500sp">
         <ImageView
             android:id="@+id/tripperLogo"
             android:layout_width="wrap_content"
@@ -72,19 +66,20 @@
             app:layout_constraintTop_toBottomOf="@+id/emailBox"
             style="@style/normal_edittext"/>
 
-        <android.support.v7.widget.AppCompatButton
-            android:id="@+id/loginButton"
-            style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/passwordBox"
-            android:layout_centerHorizontal="true"
-            android:background="@color/primaryColor"
-            android:text="@string/loginButton"
-            android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/passwordBox" />
+    <android.support.v7.widget.AppCompatButton
+        android:id="@+id/loginButton"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/passwordBox"
+        android:layout_centerHorizontal="true"
+        android:background="@color/bg"
+        android:text="@string/loginButton"
+        android:textColor="@color/primaryTextColor"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/passwordBox" />
 
         <TextView
             android:id="@+id/regPrompt"
@@ -100,19 +95,14 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/loginButton" />
 
-        <android.support.v7.widget.AppCompatButton
-            android:id="@+id/registerButton"
-            style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/regPrompt"
-            android:layout_centerHorizontal="true"
-            android:background="@color/primaryColor"
-            android:text="@string/regButton"
-            android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/regPrompt" />
-    </android.support.constraint.ConstraintLayout>
+    <ProgressBar
+        android:id="@+id/loginProgress"
+        style="@style/Base.Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/loginButton"
+        tools:layout_editor_absoluteX="20dp" />
 
 </android.support.constraint.ConstraintLayout>

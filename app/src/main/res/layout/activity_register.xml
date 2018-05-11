@@ -5,29 +5,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="rh.tripper.RegisterActivity"
-    android:background="@color/bg">
+    android:background="@color/primaryColor">
 
-    <android.support.constraint.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_margin="20dp"
-        android:background="@color/bgLight"
-        android:padding="10dp"
-        android:elevation="500sp">
-
-        <TextView
-            android:id="@+id/joinUpText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            android:text="@string/joinTripper"
-            android:textAlignment="center"
-            android:textSize="18sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+    <TextView
+        android:id="@+id/joinUpText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        android:text="@string/joinTripper"
+        android:textAlignment="center"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
         <EditText
             android:id="@+id/nameBoxNew"
@@ -113,7 +105,7 @@
             style="@style/normal_edittext"/>
 
         <CheckBox
-            android:id="@+id/checkBox"
+            android:id="@+id/termsandcons"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
@@ -125,7 +117,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/dobBox" />
 
-        <Button
+    <android.support.v7.widget.AppCompatButton
             android:id="@+id/registerButtonNew"
             style="@style/Widget.AppCompat.Button.Colored"
             android:layout_width="wrap_content"
@@ -133,14 +125,23 @@
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
-            android:background="@color/primaryColor"
+        android:background="@color/bg"
+        android:textColor="@color/primaryTextColor"
             android:text="@string/regButton"
-            android:textAllCaps="false"
-            android:textSize="18sp"
+        android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/checkBox" />
+        app:layout_constraintTop_toBottomOf="@+id/termsandcons" />
 
-    </android.support.constraint.ConstraintLayout>
-
+    <ProgressBar
+        android:id="@+id/registerProgress"
+        style="@style/Base.Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/registerButtonNew" />
 </android.support.constraint.ConstraintLayout>

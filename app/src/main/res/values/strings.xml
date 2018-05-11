@@ -5,7 +5,7 @@
     <string name="emailHint">email@tripper.com</string>
     <string name="passwordHint">password</string>
     <string name="loginButton">Log In</string>
-    <string name="regPrompt">Not joined in yet?</string>
+    <string name="regPrompt">Not joined in yet? Create an account.</string>
     <string name="regButton">Register</string>
     <string name="title_activity_main">MainActivity</string>
 
@@ -46,4 +46,9 @@
     <string name="current_password">Current password</string>
     <string name="new_password">New password</string>
     <string name="change_location">Change Location</string>
+    <string name="syncing">Syncing</string>
+    <string name="arrival_date_label">Arrival Date:</string>
+    <string name="departure_date_label">Departure Date:</string>
+    <string name="dd_mm_yyyy">DD/MM/YYYY</string>
+    <string name="auth_failed">There was an error logging in. Please try again.</string>
 </resources>

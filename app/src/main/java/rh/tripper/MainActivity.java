@@ -65,6 +65,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -133,341 +134,358 @@ public class MainActivity extends AppCompatActivity
     Boolean updatingStop = false;
     Boolean byCurrLoc = false;
 
+    FirebaseAuth auth;
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = this;
 
-        setupSync();
+        auth = FirebaseAuth.getInstance();
+        if (auth.getCurrentUser() != null) {
+            email = auth.getCurrentUser().getEmail();
 
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putString("User", email);
+            editor.apply();
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+            setupSync();
 
-        PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
-                getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
+            SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+            mapFragment.getMapAsync(this);
 
-        autoLayout = findViewById(R.id.autocomplete_layout);
+            Toolbar toolbar = findViewById(R.id.toolbar);
+            setSupportActionBar(toolbar);
 
-        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
-            @Override
-            public void onPlaceSelected(Place place) {
-                addStopName = (String) place.getName();
-                addStopLat = place.getLatLng().latitude;
-                addStopLong = place.getLatLng().longitude;
+            PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
+                    getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
 
-                autoLayout.setVisibility(View.GONE);
+            autoLayout = findViewById(R.id.autocomplete_layout);
 
-                if (updatingStop) {
-                    MainActivity.UpdateStopLocation updateStopLocation = new MainActivity.UpdateStopLocation();
-                    updateStopLocation.execute();
-                } else {
-                    final View addStopDialogView = View.inflate(context, R.layout.add_stop_dialog, null);
+            autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+                @Override
+                public void onPlaceSelected(Place place) {
+                    addStopName = (String) place.getName();
+                    addStopLat = place.getLatLng().latitude;
+                    addStopLong = place.getLatLng().longitude;
 
-                    final EditText stopNameBox = addStopDialogView.findViewById(R.id.addStopName);
-                    stopNameBox.setText(addStopName);
-                    stopArrivalDateBox = addStopDialogView.findViewById(R.id.addStopStartDate);
-                    stopDeptDateBox = addStopDialogView.findViewById(R.id.addStopEndDate);
-                    final EditText stopDescBox = addStopDialogView.findViewById(R.id.addStopDesc);
+                    autoLayout.setVisibility(View.GONE);
 
-                    calendar = Calendar.getInstance();
+                    if (updatingStop) {
+                        MainActivity.UpdateStopLocation updateStopLocation = new MainActivity.UpdateStopLocation();
+                        updateStopLocation.execute();
+                    } else {
+                        final View addStopDialogView = View.inflate(context, R.layout.add_stop_dialog, null);
 
-                    final DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
-                        @Override
-                        public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                            calendar.set(Calendar.YEAR, year);
-                            calendar.set(Calendar.MONTH, monthOfYear);
-                            calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                            updateLabel();
-                        }
-                    };
+                        final EditText stopNameBox = addStopDialogView.findViewById(R.id.addStopName);
+                        stopNameBox.setText(addStopName);
+                        stopArrivalDateBox = addStopDialogView.findViewById(R.id.addStopStartDate);
+                        stopDeptDateBox = addStopDialogView.findViewById(R.id.addStopEndDate);
+                        final EditText stopDescBox = addStopDialogView.findViewById(R.id.addStopDesc);
 
-                    stopArrivalDateBox.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            dateSwitch = 1;
-                            new DatePickerDialog(MainActivity.this, date, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
-                        }
-                    });
+                        calendar = Calendar.getInstance();
 
-                    stopDeptDateBox.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            dateSwitch = 2;
-                            new DatePickerDialog(MainActivity.this, date, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
-                        }
-                    });
+                        final DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
+                            @Override
+                            public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                                calendar.set(Calendar.YEAR, year);
+                                calendar.set(Calendar.MONTH, monthOfYear);
+                                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                                updateLabel();
+                            }
+                        };
 
-                    final AlertDialog.Builder addStopDetailsDialog = new AlertDialog.Builder(context);
-                    addStopDetailsDialog.setView(addStopDialogView)
-                            .setTitle("Add stop details")
-                            .setCancelable(false)
-                            .setNegativeButton("Add", new DialogInterface.OnClickListener() {
+                        stopArrivalDateBox.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                dateSwitch = 1;
+                                new DatePickerDialog(MainActivity.this, date, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+                            }
+                        });
+
+                        stopDeptDateBox.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                dateSwitch = 2;
+                                new DatePickerDialog(MainActivity.this, date, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+                            }
+                        });
+
+                        final AlertDialog.Builder addStopDetailsDialog = new AlertDialog.Builder(context);
+                        addStopDetailsDialog.setView(addStopDialogView)
+                                .setTitle("Add stop details")
+                                .setCancelable(false)
+                                .setNegativeButton("Add", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        boolean full = true;
+
+                                        String stopName = stopNameBox.getText().toString();
+                                        String stopArrivalDate = stopArrivalDateBox.getText().toString();
+                                        String stopDeptDate = stopDeptDateBox.getText().toString();
+                                        String stopDesc = stopDescBox.getText().toString();
+
+                                        if (TextUtils.isEmpty(stopName)) {
+                                            stopNameBox.setError("Required");
+                                            full = false;
+                                        }
+
+                                        if (stopArrivalDate.length() == 0) {
+                                            stopArrivalDateBox.setError("Required");
+                                            full = false;
+                                        }
+
+                                        if (stopDeptDate.length() == 0) {
+                                            stopDeptDateBox.setError("Required");
+                                            full = false;
+                                        }
+
+                                        if (stopDesc.length() == 0) {
+                                            stopDescBox.setError("Required");
+                                            full = false;
+                                        }
+
+                                        if (full) {
+                                            String[] stopDetails = new String[6];
+                                            stopDetails[0] = stopName;
+                                            stopDetails[1] = stopArrivalDate;
+                                            stopDetails[2] = stopDeptDate;
+                                            stopDetails[3] = stopDesc;
+                                            stopDetails[4] = String.valueOf(addStopLat);
+                                            stopDetails[5] = String.valueOf(addStopLong);
+
+                                            AddNewStopToTrip addNewStopToTrip = new AddNewStopToTrip();
+                                            addNewStopToTrip.execute(stopDetails);
+
+                                            Log.i(TAG, stopName + ", " + stopArrivalDate + ", " + stopDeptDate + ", " + stopDesc + ", " + String.valueOf(mLastLocation.getLatitude()) + ", " + String.valueOf(mLastLocation.getLongitude()));
+                                        }
+                                    }
+                                })
+                                .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        dialog.cancel();
+                                    }
+                                }).show();
+                    }
+                }
+
+                @Override
+                public void onError(Status status) {
+                    Log.i(TAG, "An error occurred: " + status);
+                }
+            });
+
+            mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
+
+            MainActivity.isConnectedToServer isConnectedToServer = new MainActivity.isConnectedToServer();
+            isConnectedToServer.execute();
+
+            mDBHelper = new DatabaseHelper(this);
+
+            fab = findViewById(R.id.fab);
+            fab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                    builder.setCancelable(false)
+                            .setTitle("Add a stop")
+                            .setMessage("How do you want to add your stop?")
+                            .setPositiveButton("Current location", new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
-                                    boolean full = true;
+                                    if (mLastLocation != null) {
+                                        final View addStopDialogView = View.inflate(context, R.layout.add_stop_dialog, null);
 
-                                    String stopName = stopNameBox.getText().toString();
-                                    String stopArrivalDate = stopArrivalDateBox.getText().toString();
-                                    String stopDeptDate = stopDeptDateBox.getText().toString();
-                                    String stopDesc = stopDescBox.getText().toString();
+                                        final EditText stopNameBox = addStopDialogView.findViewById(R.id.addStopName);
+                                        stopArrivalDateBox = addStopDialogView.findViewById(R.id.addStopStartDate);
+                                        stopDeptDateBox = addStopDialogView.findViewById(R.id.addStopEndDate);
+                                        final EditText stopDescBox = addStopDialogView.findViewById(R.id.addStopDesc);
 
-                                    if (TextUtils.isEmpty(stopName)) {
-                                        stopNameBox.setError("Required");
-                                        full = false;
-                                    }
+                                        calendar = Calendar.getInstance();
 
-                                    if (stopArrivalDate.length() == 0) {
-                                        stopArrivalDateBox.setError("Required");
-                                        full = false;
-                                    }
+                                        final DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
+                                            @Override
+                                            public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                                                calendar.set(Calendar.YEAR, year);
+                                                calendar.set(Calendar.MONTH, monthOfYear);
+                                                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                                                updateLabel();
+                                            }
+                                        };
 
-                                    if (stopDeptDate.length() == 0) {
-                                        stopDeptDateBox.setError("Required");
-                                        full = false;
-                                    }
+                                        stopArrivalDateBox.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View view) {
+                                                dateSwitch = 1;
+                                                new DatePickerDialog(MainActivity.this, date, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+                                            }
+                                        });
 
-                                    if (stopDesc.length() == 0) {
-                                        stopDescBox.setError("Required");
-                                        full = false;
-                                    }
+                                        stopDeptDateBox.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View view) {
+                                                dateSwitch = 2;
+                                                new DatePickerDialog(MainActivity.this, date, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+                                            }
+                                        });
 
-                                    if (full) {
-                                        String[] stopDetails = new String[6];
-                                        stopDetails[0] = stopName;
-                                        stopDetails[1] = stopArrivalDate;
-                                        stopDetails[2] = stopDeptDate;
-                                        stopDetails[3] = stopDesc;
-                                        stopDetails[4] = String.valueOf(addStopLat);
-                                        stopDetails[5] = String.valueOf(addStopLong);
+                                        final AlertDialog.Builder addStopDetailsDialog = new AlertDialog.Builder(context);
+                                        addStopDetailsDialog.setView(addStopDialogView)
+                                                .setTitle("Add stop details")
+                                                .setCancelable(false)
+                                                .setNegativeButton("Add", new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int id) {
+                                                        boolean full = true;
 
-                                        AddNewStopToTrip addNewStopToTrip = new AddNewStopToTrip();
-                                        addNewStopToTrip.execute(stopDetails);
+                                                        String stopName = stopNameBox.getText().toString();
+                                                        String stopArrivalDate = stopArrivalDateBox.getText().toString();
+                                                        String stopDeptDate = stopDeptDateBox.getText().toString();
+                                                        String stopDesc = stopDescBox.getText().toString();
 
-                                        Log.i(TAG, stopName + ", " + stopArrivalDate + ", " + stopDeptDate + ", " + stopDesc + ", " + String.valueOf(mLastLocation.getLatitude()) + ", " + String.valueOf(mLastLocation.getLongitude()));
+                                                        if (TextUtils.isEmpty(stopName)) {
+                                                            stopNameBox.setError("Required");
+                                                            full = false;
+                                                        }
+
+                                                        if (stopArrivalDate.length() == 0) {
+                                                            stopArrivalDateBox.setError("Required");
+                                                            full = false;
+                                                        }
+
+                                                        if (stopDeptDate.length() == 0) {
+                                                            stopDeptDateBox.setError("Required");
+                                                            full = false;
+                                                        }
+
+                                                        if (stopDesc.length() == 0) {
+                                                            stopDescBox.setError("Required");
+                                                            full = false;
+                                                        }
+
+                                                        if (full) {
+                                                            String[] stopDetails = new String[6];
+                                                            stopDetails[0] = stopName;
+                                                            stopDetails[1] = stopArrivalDate;
+                                                            stopDetails[2] = stopDeptDate;
+                                                            stopDetails[3] = stopDesc;
+                                                            stopDetails[4] = String.valueOf(mLastLocation.getLatitude());
+                                                            stopDetails[5] = String.valueOf(mLastLocation.getLongitude());
+
+                                                            AddNewStopToTrip addNewStopToTrip = new AddNewStopToTrip();
+                                                            addNewStopToTrip.execute(stopDetails);
+                                                        }
+                                                    }
+                                                })
+                                                .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int id) {
+                                                        dialog.cancel();
+                                                    }
+                                                }).show();
+                                    } else {
+                                        showSnackbar("Your location was not found");
                                     }
                                 }
                             })
-                            .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
+                            .setNegativeButton("Search", new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
-                                    dialog.cancel();
+                                    autoLayout.setVisibility(View.VISIBLE);
                                 }
                             }).show();
                 }
-            }
+            });
 
-            @Override
-            public void onError(Status status) {
-                Log.i(TAG, "An error occurred: " + status);
-            }
-        });
+            DrawerLayout drawer = findViewById(R.id.drawer_layout);
+            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                    this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+            drawer.addDrawerListener(toggle);
+            toggle.syncState();
 
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
+            NavigationView navigationView = findViewById(R.id.nav_view);
+            navigationView.setNavigationItemSelectedListener(this);
 
-        MainActivity.isConnectedToServer isConnectedToServer = new MainActivity.isConnectedToServer();
-        isConnectedToServer.execute();
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+            email = preferences.getString("User", null);
 
-        mDBHelper = new DatabaseHelper(this);
+            llBottomSheet = findViewById(R.id.bottom_sheet);
 
-        fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                builder.setCancelable(false)
-                        .setTitle("Add a stop")
-                        .setMessage("How do you want to add your stop?")
-                        .setPositiveButton("Current location", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                if (mLastLocation != null) {
-                                    final View addStopDialogView = View.inflate(context, R.layout.add_stop_dialog, null);
+            bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
+            bottomSheetBehavior.setPeekHeight(0);
+            bottomSheetBehavior.setHideable(false);
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-                                    final EditText stopNameBox = addStopDialogView.findViewById(R.id.addStopName);
-                                    stopArrivalDateBox = addStopDialogView.findViewById(R.id.addStopStartDate);
-                                    stopDeptDateBox = addStopDialogView.findViewById(R.id.addStopEndDate);
-                                    final EditText stopDescBox = addStopDialogView.findViewById(R.id.addStopDesc);
+            bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+                @Override
+                public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                    if (newState == 3) {
+                        Button stopEditButton = findViewById(R.id.stopEditButton);
+                        Button stopDeleteButton = findViewById(R.id.stopDelButton);
 
-                                    calendar = Calendar.getInstance();
+                        stopEditButton.setVisibility(View.VISIBLE);
+                        stopDeleteButton.setVisibility(View.VISIBLE);
+                    }
 
-                                    final DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
-                                        @Override
-                                        public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                                            calendar.set(Calendar.YEAR, year);
-                                            calendar.set(Calendar.MONTH, monthOfYear);
-                                            calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                                            updateLabel();
-                                        }
-                                    };
+                    if (newState == 4 || newState == 1) {
+                        Button stopEditButton = findViewById(R.id.stopEditButton);
+                        Button stopDeleteButton = findViewById(R.id.stopDelButton);
 
-                                    stopArrivalDateBox.setOnClickListener(new View.OnClickListener() {
-                                        @Override
-                                        public void onClick(View view) {
-                                            dateSwitch = 1;
-                                            new DatePickerDialog(MainActivity.this, date, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
-                                        }
-                                    });
+                        stopEditButton.setVisibility(View.GONE);
+                        stopDeleteButton.setVisibility(View.GONE);
 
-                                    stopDeptDateBox.setOnClickListener(new View.OnClickListener() {
-                                        @Override
-                                        public void onClick(View view) {
-                                            dateSwitch = 2;
-                                            new DatePickerDialog(MainActivity.this, date, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
-                                        }
-                                    });
+                        Resources r = context.getResources();
+                        int px = (int) TypedValue.applyDimension(
+                                TypedValue.COMPLEX_UNIT_DIP,
+                                60,
+                                r.getDisplayMetrics()
+                        );
 
-                                    final AlertDialog.Builder addStopDetailsDialog = new AlertDialog.Builder(context);
-                                    addStopDetailsDialog.setView(addStopDialogView)
-                                            .setTitle("Add stop details")
-                                            .setCancelable(false)
-                                            .setNegativeButton("Add", new DialogInterface.OnClickListener() {
-                                                public void onClick(DialogInterface dialog, int id) {
-                                                    boolean full = true;
+                        CoordinatorLayout.LayoutParams params = new CoordinatorLayout.LayoutParams(
+                                CoordinatorLayout.LayoutParams.WRAP_CONTENT,
+                                CoordinatorLayout.LayoutParams.WRAP_CONTENT
+                        );
 
-                                                    String stopName = stopNameBox.getText().toString();
-                                                    String stopArrivalDate = stopArrivalDateBox.getText().toString();
-                                                    String stopDeptDate = stopDeptDateBox.getText().toString();
-                                                    String stopDesc = stopDescBox.getText().toString();
+                        params.gravity = BOTTOM | END;
+                        params.bottomMargin = px;
 
-                                                    if (TextUtils.isEmpty(stopName)) {
-                                                        stopNameBox.setError("Required");
-                                                        full = false;
-                                                    }
+                        px = (int) TypedValue.applyDimension(
+                                TypedValue.COMPLEX_UNIT_DIP,
+                                10,
+                                r.getDisplayMetrics()
+                        );
+                        params.rightMargin = px;
+                        fab.setLayoutParams(params);
+                    }
 
-                                                    if (stopArrivalDate.length() == 0) {
-                                                        stopArrivalDateBox.setError("Required");
-                                                        full = false;
-                                                    }
+                    if (newState == 5) {
+                        Resources r = context.getResources();
+                        int px = (int) TypedValue.applyDimension(
+                                TypedValue.COMPLEX_UNIT_DIP,
+                                10,
+                                r.getDisplayMetrics()
+                        );
 
-                                                    if (stopDeptDate.length() == 0) {
-                                                        stopDeptDateBox.setError("Required");
-                                                        full = false;
-                                                    }
+                        CoordinatorLayout.LayoutParams params = new CoordinatorLayout.LayoutParams(
+                                CoordinatorLayout.LayoutParams.WRAP_CONTENT,
+                                CoordinatorLayout.LayoutParams.WRAP_CONTENT
+                        );
 
-                                                    if (stopDesc.length() == 0) {
-                                                        stopDescBox.setError("Required");
-                                                        full = false;
-                                                    }
-
-                                                    if (full) {
-                                                        String[] stopDetails = new String[6];
-                                                        stopDetails[0] = stopName;
-                                                        stopDetails[1] = stopArrivalDate;
-                                                        stopDetails[2] = stopDeptDate;
-                                                        stopDetails[3] = stopDesc;
-                                                        stopDetails[4] = String.valueOf(mLastLocation.getLatitude());
-                                                        stopDetails[5] = String.valueOf(mLastLocation.getLongitude());
-
-                                                        AddNewStopToTrip addNewStopToTrip = new AddNewStopToTrip();
-                                                        addNewStopToTrip.execute(stopDetails);
-                                                    }
-                                                }
-                                            })
-                                            .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
-                                                public void onClick(DialogInterface dialog, int id) {
-                                                    dialog.cancel();
-                                                }
-                                            }).show();
-                                } else {
-                                    showSnackbar("Your location was not found");
-                                }
-                            }
-                        })
-                        .setNegativeButton("Search", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                autoLayout.setVisibility(View.VISIBLE);
-                            }
-                        }).show();
-            }
-        });
-
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
-
-        NavigationView navigationView = findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        email = preferences.getString("User", null);
-
-        llBottomSheet = findViewById(R.id.bottom_sheet);
-
-        bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
-        bottomSheetBehavior.setPeekHeight(0);
-        bottomSheetBehavior.setHideable(false);
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-
-        bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-            @Override
-            public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                if (newState == 3) {
-                    Button stopEditButton = findViewById(R.id.stopEditButton);
-                    Button stopDeleteButton = findViewById(R.id.stopDelButton);
-
-                    stopEditButton.setVisibility(View.VISIBLE);
-                    stopDeleteButton.setVisibility(View.VISIBLE);
+                        params.gravity = BOTTOM | END;
+                        params.bottomMargin = px;
+                        params.rightMargin = px;
+                        fab.setLayoutParams(params);
+                    }
                 }
 
-                if (newState == 4 || newState == 1) {
-                    Button stopEditButton = findViewById(R.id.stopEditButton);
-                    Button stopDeleteButton = findViewById(R.id.stopDelButton);
+                @Override
+                public void onSlide(@NonNull View bottomSheet, float slideOffset) {
 
-                    stopEditButton.setVisibility(View.GONE);
-                    stopDeleteButton.setVisibility(View.GONE);
-
-                    Resources r = context.getResources();
-                    int px = (int) TypedValue.applyDimension(
-                            TypedValue.COMPLEX_UNIT_DIP,
-                            60,
-                            r.getDisplayMetrics()
-                    );
-
-                    CoordinatorLayout.LayoutParams params = new CoordinatorLayout.LayoutParams(
-                            CoordinatorLayout.LayoutParams.WRAP_CONTENT,
-                            CoordinatorLayout.LayoutParams.WRAP_CONTENT
-                    );
-
-                    params.gravity = BOTTOM | END;
-                    params.bottomMargin = px;
-
-                    px = (int) TypedValue.applyDimension(
-                            TypedValue.COMPLEX_UNIT_DIP,
-                            10,
-                            r.getDisplayMetrics()
-                    );
-                    params.rightMargin = px;
-                    fab.setLayoutParams(params);
                 }
+            });
+        } else {
+            Intent intent = new Intent(MainActivity.this, LandingActivity.class);
+            startActivity(intent);
+            finish();
+        }
 
-                if (newState == 5) {
-                    Resources r = context.getResources();
-                    int px = (int) TypedValue.applyDimension(
-                            TypedValue.COMPLEX_UNIT_DIP,
-                            10,
-                            r.getDisplayMetrics()
-                    );
-
-                    CoordinatorLayout.LayoutParams params = new CoordinatorLayout.LayoutParams(
-                            CoordinatorLayout.LayoutParams.WRAP_CONTENT,
-                            CoordinatorLayout.LayoutParams.WRAP_CONTENT
-                    );
-
-                    params.gravity = BOTTOM | END;
-                    params.bottomMargin = px;
-                    params.rightMargin = px;
-                    fab.setLayoutParams(params);
-                }
-            }
-
-            @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-
-            }
-        });
     }
 
     @Override
@@ -653,19 +671,9 @@ public class MainActivity extends AppCompatActivity
         } else if (item.getItemId() == R.id.settings) {
             Toast.makeText(context, String.valueOf(item.getItemId()), Toast.LENGTH_LONG).show();
         } else if (item.getItemId() == R.id.logout) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-            builder.setTitle("Are you sure?")
-                    .setCancelable(true)
-                    .setPositiveButton("Log out", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            logout();
-                        }
-                    })
-                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            dialog.cancel();
-                        }
-                    }).show();
+            auth.signOut();
+            startActivity(new Intent(MainActivity.this, LandingActivity.class));
+            finish();
         } else if (item.getItemId() == R.id.addTripID) {
 
             final View addTripView = View.inflate(context, R.layout.add_trip_dialog, null);
@@ -727,6 +735,7 @@ public class MainActivity extends AppCompatActivity
         JobInfo job = new JobInfo.Builder(TRIPPER_SYNC_JOB_ID, new ComponentName(this, BackgroundSync.class))
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setRequiresCharging(false)
+                .setPeriodic(300000)
                 .build();
 
         JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
@@ -929,8 +938,8 @@ public class MainActivity extends AppCompatActivity
             saveButton.setVisibility(View.GONE);
 
             String name = nameEdit.getText().toString();
-            String arrival = "Arrival: " + arrivalEdit.getText().toString();
-            String dept = "Left: " + deptEdit.getText().toString();
+            String arrival = arrivalEdit.getText().toString();
+            String dept = deptEdit.getText().toString();
             String desc = descEdit.getText().toString();
 
             String[] details = new String[4];
@@ -976,8 +985,8 @@ public class MainActivity extends AppCompatActivity
             saveButton.setVisibility(View.VISIBLE);
 
             String name = nameView.getText().toString();
-            String arrival = arrivalView.getText().toString().substring(8);
-            String dept = deptView.getText().toString().substring(5);
+            String arrival = arrivalView.getText().toString();
+            String dept = deptView.getText().toString();
             String desc = descView.getText().toString();
 
             nameView.setVisibility(View.GONE);
@@ -1434,64 +1443,6 @@ public class MainActivity extends AppCompatActivity
                     markerObj.setTag(stopID);
 
                     map.moveCamera(CameraUpdateFactory.newLatLngZoom(marker, 4));
-
-
-                    /*if(offlineMode) {
-                        String[] projection = {DatabaseHelper.StopEntry.COLUMN_NAME_STOPID};
-
-                        String selection = DatabaseHelper.StopEntry.COLUMN_NAME_STOPID + " = ?";
-                        String[] selectionArgs = {String.valueOf(stopsObj.getInt("stopID"))};
-
-                        Cursor cursor = db.query(
-                                DatabaseHelper.StopEntry.TABLE_NAME,
-                                projection,
-                                selection,
-                                selectionArgs,
-                                null,
-                                null,
-                                null
-                        );
-
-                        long itemID = 0;
-
-                        while (cursor.moveToNext()) {
-                            itemID = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.StopEntry.COLUMN_NAME_STOPID));
-                        }
-                        cursor.close();
-
-                        if (itemID > 0) {
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPID, String.valueOf(stopsObj.getInt("stopID")));
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID, stopsObj.getString("tripID"));
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_EMAIL, email);
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME, stopsObj.getString("stopName"));
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL, stopsObj.getString("arrivalDate"));
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_DEPT, stopsObj.getString("deptDate"));
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPDESC, stopsObj.getString("stopDesc"));
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_LAT, stopsObj.getString("lat"));
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_LONG, stopsObj.getString("long"));
-
-                            String stopUpdate = DatabaseHelper.StopEntry.COLUMN_NAME_STOPID + " LIKE ?";
-                            String[] stopUpdateArgs = {String.valueOf(stopsObj.getInt("stopID"))};
-
-                            db.update(
-                                    DatabaseHelper.StopEntry.TABLE_NAME,
-                                    stopDetails,
-                                    stopUpdate,
-                                    stopUpdateArgs);
-                        } else {
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPID, String.valueOf(stopsObj.getInt("stopID")));
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_TRIPID, stopsObj.getString("tripID"));
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_EMAIL, email);
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPNAME, stopsObj.getString("stopName"));
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_ARRIVAL, stopsObj.getString("arrivalDate"));
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_DEPT, stopsObj.getString("deptDate"));
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_STOPDESC, stopsObj.getString("stopDesc"));
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_LAT, stopsObj.getString("lat"));
-                            stopDetails.put(DatabaseHelper.StopEntry.COLUMN_NAME_LONG, stopsObj.getString("long"));
-
-                            db.insert(DatabaseHelper.StopEntry.TABLE_NAME, null, stopDetails);
-                        }
-                    }*/
                 }
 
                 mDBHelper.close();
@@ -1518,8 +1469,8 @@ public class MainActivity extends AppCompatActivity
 
                                     stopName.setText(stopObject.getString("stopName"));
                                     stopDesc.setText(stopObject.getString("stopDesc"));
-                                    arrivalDate.setText(getString(R.string.arrivalLabelStart) + stopObject.getString("arrivalDate"));
-                                    deptDate.setText(getString(R.string.deptLabelStart) + stopObject.getString("deptDate"));
+                                    arrivalDate.setText(stopObject.getString("arrivalDate"));
+                                    deptDate.setText(stopObject.getString("deptDate"));
 
                                     map.moveCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
 

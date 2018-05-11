@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "374369495140",
+    "firebase_url": "https://tripper-197116.firebaseio.com",
+    "project_id": "tripper-197116",
+    "storage_bucket": "tripper-197116.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:374369495140:android:94be2ea7feaa896d",
+        "android_client_info": {
+          "package_name": "rh.tripper"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "374369495140-3no383glt58imk18dtuhta6v1l7actrn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAb_d-u-tERSfJmdK_pCrPvYqektyLE_Yw"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

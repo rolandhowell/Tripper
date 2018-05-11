@@ -1,5 +1,6 @@
 package rh.tripper;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Context;
@@ -9,11 +10,21 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -32,25 +43,17 @@ public class RegisterActivity extends AppCompatActivity {
     String urlString = "http://ec2-18-221-155-124.us-east-2.compute.amazonaws.com:3000/";
 
     Calendar dobCalendar = null;
-    EditText dobBox = null;
-    EditText nameBox = null;
-    EditText emailBox = null;
-    EditText passwordBox = null;
-    EditText cityBox = null;
-    EditText countryBox = null;
+    EditText dobBox, nameBox, emailBox, passwordBox, cityBox, countryBox;
     Button regButton = null;
     Context context = null;
     View viewVar = null;
+    ProgressBar progressBar;
+    CheckBox termsandcons;
 
-    int count = 0;
-
-    String dob = null;
-    String name = null;
-    String email = null;
-    String password = null;
-    String city = null;
-    String country = null;
+    String dob, name, email, password, city, country;
+    Boolean tandcs;
     boolean result = false;
+    FirebaseAuth auth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,10 +61,12 @@ public class RegisterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_register);
 
         context = this;
+        auth = FirebaseAuth.getInstance();
 
         dobCalendar = Calendar.getInstance();
         dobBox = findViewById(R.id.dobBox);
         regButton = findViewById(R.id.registerButtonNew);
+        progressBar = findViewById(R.id.registerProgress);
 
         final DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
             @Override
@@ -89,6 +94,7 @@ public class RegisterActivity extends AppCompatActivity {
                 cityBox = findViewById(R.id.cityBoxNew);
                 countryBox = findViewById(R.id.countryBoxNew);
                 dobBox = findViewById(R.id.dobBox);
+                termsandcons = findViewById(R.id.termsandcons);
 
                 name = nameBox.getText().toString();
                 email = emailBox.getText().toString();
@@ -97,30 +103,48 @@ public class RegisterActivity extends AppCompatActivity {
                 country = countryBox.getText().toString();
                 dob = dobBox.getText().toString();
 
-                if(name.length() == 0)
+                if (TextUtils.isEmpty(name))
                 {
                     nameBox.setError("Name is required");
-                    count++;
+                    return;
                 }
 
-                if(email.length() == 0)
+                if (TextUtils.isEmpty(email))
                 {
                     emailBox.setError("Email is required");
-                    count++;
+                    return;
                 }
 
-                if(password.length() == 0)
+                if (TextUtils.isEmpty(password))
                 {
                     passwordBox.setError("Name is required");
-                    count++;
+                    return;
                 }
 
-                if(count == 0)
-                {
-                    viewVar = view;
-                    CreateUser logIn = new CreateUser();
-                    logIn.execute(email);
+                if (!termsandcons.isChecked()) {
+                    termsandcons.setError("Required");
+                    return;
                 }
+
+                progressBar.setVisibility(View.VISIBLE);
+                //create user
+                auth.createUserWithEmailAndPassword(email, password)
+                        .addOnCompleteListener(RegisterActivity.this, new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                progressBar.setVisibility(View.GONE);
+                                // If sign in fails, display a message to the user. If sign in succeeds
+                                // the auth state listener will be notified and logic to handle the
+                                // signed in user can be handled in the listener.
+                                if (!task.isSuccessful()) {
+                                    Toast.makeText(RegisterActivity.this, "Authentication failed." + task.getException(),
+                                            Toast.LENGTH_SHORT).show();
+                                } else {
+                                    RegisterActivity.CreateUser createUser = new RegisterActivity.CreateUser();
+                                    createUser.execute();
+                                }
+                            }
+                        });
             }
         }));
     }
@@ -132,8 +156,8 @@ public class RegisterActivity extends AppCompatActivity {
         dobBox.setText(sdf.format(dobCalendar.getTime()));
     }
 
+    @SuppressLint("StaticFieldLeak")
     private class CreateUser extends AsyncTask<String, Void, Boolean> {
-
 
         @Override
         protected void onPreExecute() {
@@ -143,26 +167,22 @@ public class RegisterActivity extends AppCompatActivity {
         @Override
         protected Boolean doInBackground(String... emailIn) {
 
-            HttpURLConnection urlConnection = null;
-            InputStream in = null;
+            HttpURLConnection urlConnection;
+            InputStream in;
 
             try{
-                URL url = new URL(urlString + "reguser?email=" + email + "&password=" + password + "&name=" + name + "&city=" + city + "&country=" + country + "&dob=" + dob);
+                URL url = new URL(urlString + "reguser?email=" + email + "&name=" + name + "&city=" + city + "&country=" + country + "&dob=" + dob);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedInputStream(urlConnection.getInputStream());
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));
                 result = Boolean.valueOf(reader.readLine());
                 urlConnection.disconnect();
                 in.close();
-            }
-            catch (MalformedURLException e) {
+            } catch (MalformedURLException e) {
                 e.printStackTrace();
-            }
-            catch (IOException e){
+            } catch (IOException e) {
                 e.printStackTrace();
-            }
-            finally
-            {
+            } finally {
                 return result;
             }
         }
@@ -170,8 +190,7 @@ public class RegisterActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean resultB) {
 
-            if (result == true)
-            {
+            if (result) {
                 SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
                 SharedPreferences.Editor editor = sharedPref.edit();
                 editor.putString("User", email);

@@ -22,7 +22,7 @@
         <item name="colorButtonNormal">@color/primaryDarkColor</item>
     </style>
     <style name="normal_edittext" parent="Theme.AppCompat.Light">
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">18sp</item>
         <item name="colorControlActivated">@color/primaryLightColor</item>
     </style>
 </resources>
